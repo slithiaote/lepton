@@ -146,7 +146,7 @@ rm lepton_manual.* lepton_tutorial.* hello.*
 \section{Implementation}
 \label{sec:implementation}
 
-The implementation published in this document is written in the OCaml programming language \cite{ocamlrefman} is divided into several modules:
+The implementation published in this document is written in the OCaml programming language \cite{ocamlrefman} using only the standard library. It is divided into several modules:
 \begin{itemize}
 \item the \hyperref[sec:main]{\texttt{main} function},
 \item the \hyperref[sec:lepton_module]{\texttt{lepton} module} contains type definitions and useful functions,
@@ -532,7 +532,7 @@ let send_to_latex_minted = fun name o reflist chunk output ->
 Here is an example of a chunk formatted by \verb latex_minted .
 \begin{verbatim}
 <<tex_output -exec shell -chunk hide -output verb>>=
-head lepton.tex -n 79 | tail -n 9
+head lepton.tex -n 122 | tail -n 9
 @ 
 \end{verbatim}
 
@@ -602,14 +602,19 @@ let set = function
 \section{Compilation}
 \label{sec:compile}
 
-The bytecode version is portable, but needs the Ocaml runtime for execution. It can be compiled with
-<<shell_compile -exec shell>>=
-ocamlc -o lepton_bytecode.bin str.cma dynlink.cma unix.cma lepton.ml lexer.ml interpreters.ml formatters.ml main.ml
-@ 
-
-The native code version is standalone.
+The program can be compiled with the following instruction. We also compute the MD5SUM.
 <<shell_compile -exec shell>>=
 ocamlopt -o lepton.bin str.cmxa dynlink.cmxa unix.cmxa lepton.ml lexer.ml interpreters.ml formatters.ml main.ml
+md5sum -b lepton.bin > lepton.md5
+cat lepton.md5
+@ 
+
+To produce this document, you need to process the \verb|lepton.nw| file then call \LaTeX. This requires the \verb Pygments  Python library.
+<<shell_pdf -exec none>>=
+./lepton.bin lepton.nw -o lepton.tex
+xelatex -shell-escape -8bit lepton.tex
+bibtex lepton.aux
+xelatex -shell-escape -8bit lepton.tex
 @ 
 
 \section{The \lepton\ manual}
@@ -699,8 +704,7 @@ pdflatex -shell-escape lepton_manual.tex  # LaTeX needs to execute twice to reso
 \label{lepton_tutorial.nw}
 
 <<lepton_tutorial.nw -chunk hide -write>>=
-\lepton\ processes files written in \LaTeX-like syntax. 
-To write a ``hello world'' manuscript, the first step is to write a \verb hello.nw  file containing:
+To write a ``hello world'' manuscript, we use the \verb hello.nw  as an example of the \LaTeX-like syntax:
 
 <<hello.nw -write -chunk tex>>=
 \documentclass[paper=a7]{scrartcl}
@@ -708,7 +712,7 @@ To write a ``hello world'' manuscript, the first step is to write a \verb hello.
 \input{lepton.sty}
 \begin{document}
 The code below sends "hello world" instructions to the \verb ocaml  interpreter.
-<<hello_world -exec ocaml>>=
+<<hello_world -exec ocaml -chunk ocaml>>=
 let msg = "Hello world.";;
 print_string(msg); print_newline();;
 @ 
@@ -717,7 +721,7 @@ print_string(msg); print_newline();;
 
 \hspace*{-0.7cm}
 \begin{minipage}{0.7\linewidth}
-The second step is to apply \lepton. This tool splits the file into documentation 
+The \lepton\ executable splits the file into documentation 
 and source code, executes instructions where specified, and embeds the results. 
 \lepton\ turns \verb hello.nw  into a legitimate \LaTeX\ document \verb hello.tex . 
 When processing a file, \lepton\ outputs the name of each encountered code snippet 
