@@ -1,0 +1,755 @@
+\documentclass[a4paper,10pt]{scrartcl}
+% \usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{bbm}
+\usepackage{graphicx}
+\usepackage{stmaryrd}
+\usepackage[bindingoffset=0cm,width=19cm,height=28cm]{geometry}
+\usepackage[title=normal,sections=normal]{savetrees}
+% reduce lists and floats
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{hyperref}
+\usepackage{fancybox}
+
+<<lepton.sty -chunk hide -write>>=
+\usepackage{minted}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{makeidx}
+\makeindex
+
+\newcommand{\lepton}{Lepton}
+\makeatletter
+\renewcommand\floatc@ruled[2]{{\bfseries #1:} \texttt{\flqq\relax#2\frqq}\par}
+\renewcommand\fs@plaintop{\fs@plain
+  \let\@fs@capt\floatc@ruled
+  \def\@fs@pre{\relax\vspace*{-5pt}}%
+  \def\@fs@mid{\relax}%
+  \def\@fs@post{\relax\vspace*{-5pt}}%
+  \let\@fs@iftopcapt\iftrue}
+\floatname{leptonfloat}{Code chunk}
+\newcommand\lelistoflistingscaption{\lepton\ : List of listings}
+\providecommand\lelistoflistings{\listof{leptonfloat}{\lelistoflistingscaption}}
+\makeatother
+\floatstyle{plaintop}
+\newfloat{leptonfloat}{H}{lol}
+\newminted[leptonchunk]{ocaml}{frame=single,fontsize=\footnotesize}
+@ 
+\input{lepton.sty}
+
+\makeatletter
+\newcommand\floatc@spec[0]{{\bfseries Specification:}}
+\newcommand\fs@specification{\def\@fs@cfont{\bfseries}\let\@fs@capt\floatc@plain
+\def\@fs@pre{Specification \setbox\@currbox\vbox{\hbadness10000
+\moveleft3.4pt\vbox{\advance\hsize by6.8pt
+\hrule \hbox to\hsize{\vrule\kern3pt
+\vbox{\kern3pt\box\@currbox\kern3pt}\kern3pt\vrule}\hrule}}}%
+\def\@fs@mid{\kern2pt}%
+\def\@fs@post{}\let\@fs@iftopcapt\iffalse}
+\makeatother
+\floatstyle{specification}
+\newfloat{specification}{H}{spec}
+
+
+\begin{document} %
+
+<<lepton_options -chunk ocaml>>=
+lepton.first lepton.nw -o lepton.tex; xelatex --shell-escape -8bit lepton.tex
+@ 
+
+\title{Lepton implementation details}
+\author{Li-Thiao-Té Sébastien}
+\maketitle
+
+\begin{verse}
+  One Ring to rule them all,\\
+  One Ring to find them,\\
+  One Ring to bring them all\\
+  and in the darkness bind them
+\end{verse}
+\textit{The Lord of the Rings, JRR Tolkien}
+
+\section{Introduction}
+
+\subsection{Overview}
+
+\lepton\ is an automaton for the literate execution of programs. As in the literate programming paradigm, \lepton\ makes it possible to reorganize source code in the form of meaningful chunks, regardless of the constraints of the programming language. In addition, \lepton\ files are executable programs which can:
+\begin{itemize}
+\item generate the complete hierarchy of source files in a software project,
+\item configure the environment, compile the source code and produce binary executables,
+\item execute the compiled programs and communicate with command interpreters to process data and produce figures,
+\item generate full-featured documentation for source code and executable instructions.
+\end{itemize}
+
+This manuscript contains the implementation details of \lepton, documented as a \lepton\ file, with many helpful comments on the programming techniques used in the source code. In addition, the program specifications included in this document are used to produce the standalone PDF manual and a tutorial. The software is published under the CeCILL-B license.
+
+<<boilerplate -chunk text>>=
+(* 
+Copyright Li-Thiao-Té Sébastien (2018)
+lithiao@math.univ-paris13.fr
+
+This software is a computer program whose purpose is to facilitate the
+creation and distribution of literate executable papers. It processes
+files containing source code and documentation, and can execute commands
+to produce (scientific) reports.
+
+This software is governed by the CeCILL  license under French law and
+abiding by the rules of distribution of free software.  You can  use, 
+modify and/ or redistribute the software under the terms of the CeCILL
+license as circulated by CEA, CNRS and INRIA at the following URL
+"http://www.cecill.info". 
+
+As a counterpart to the access to the source code and  rights to copy,
+modify and redistribute granted by the license, users are provided only
+with a limited warranty  and the software's author,  the holder of the
+economic rights,  and the successive licensors  have only  limited
+liability. 
+
+In this respect, the user's attention is drawn to the risks associated
+with loading,  using,  modifying and/or developing or reproducing the
+software by the user in light of its specific status of free software,
+that may mean  that it is complicated to manipulate,  and  that  also
+therefore means  that it is reserved for developers  and  experienced
+professionals having in-depth computer knowledge. Users are therefore
+encouraged to load and test the software's suitability as regards their
+requirements in conditions enabling the security of their systems and/or 
+data to be ensured and,  more generally, to use and operate it in the 
+same conditions as regards security. 
+
+The fact that you are presently reading this means that you have had
+knowledge of the CeCILL license and that you accept its terms.
+*)
+@ 
+
+\subsection{Document structure}
+
+This document is structured as a standard \LaTeX\ file --- with sections, subsections, etc. --- with embedded chunks that may contain any type of textual data, including source code and executable instructions. \lepton\ processes the file in linear order; in particular, chunks that contain source code are written to disk, and instructions are executed where they are defined. 
+
+Think of this as a self-contained executable script intended to produce the \lepton\ executable program. The script follows these steps:
+\begin{enumerate}
+\item clean the current directory,
+<<clean -exec shell -chunk sh>>=
+# Remove pre-existing files
+rm *.ml *.bin *.pdf *.mll *.cmi *.cmo
+rm lepton_manual.* lepton_tutorial.* hello.*
+@ 
+\item write the source code (Section \ref{sec:implementation})
+\item compile the source code and run some tests (Section \ref{sec:compile})
+\item assemble the specifications into a standalone manual and compile it to PDF (Section \ref{sec:manual})
+\end{enumerate}
+
+\section{Implementation}
+\label{sec:implementation}
+
+The implementation published in this document is written in the OCaml programming language \cite{ocamlrefman} is divided into several modules:
+\begin{itemize}
+\item the \hyperref[sec:main]{\texttt{main} function},
+\item the \hyperref[sec:lepton_module]{\texttt{lepton} module} contains type definitions and useful functions,
+\item the \hyperref[sec:lexer]{\texttt{lexer} module} defines the syntax of \lepton\ files and the functions to process it with the \verb ocamllex  lexical analyzer,
+\item the \hyperref[sec:interpreters]{\texttt{interpreters} module} handles communication with external interpreters,
+\item and the \hyperref[sec:formatters]{\texttt{formatters} module} prepares the contents of chunks and the output of command interpreters for inclusion in the documentation.
+\end{itemize}
+
+\subsection{Main function}
+\label{sec:main}
+
+\begin{specification}
+\label{spec_commandline}
+<<spec_commandline -chunk verb>>=
+\begin{verbatim}
+lepton [-format_with formatter] [filename] [-o output]
+\end{verbatim}
+
+By default, \lepton\ reads from \verb stdin , writes to \verb stdout  and formats chunks in \LaTeX\ format with the \verb minted  package for pretty-printing (see \ref{spec_formatting} for details). Provided options are set in appearing order, with the following effects :
+\begin{itemize}
+\item \textbf{filename} sets the input file name.
+\item \textbf{-o output} sets the name of the generated documentation file.
+\item \textbf{-format\_with formatter} sets the \verb formatter  for embedding chunk contents and the output of executable instructions in the documentation file.
+\end{itemize}
+@   
+\end{specification}
+
+The main function is responsible for 
+\begin{itemize}
+\item parsing the command line options via the \verb Arg  library,
+<<main.ml -write>>=
+<<boilerplate>>
+print_endline "This is the Lepton/Lex implementation.";;
+open Lepton;;       (* Load common definitions *)
+open Interpreters;; (* Load the default set of interpreters *)
+let option_spec = ("-o", Arg.String (fun s -> lepton_oc := open_out s), "name of the output file (default is stdout)") ::
+                  ("-format_with", Arg.String Formatters.set, "set the formatter (default is LaTeX/minted") :: [] in
+let anon_spec =   fun s -> lepton_ic := open_in s; in (* anonymous arguments are interpreted as input filename *)
+Arg.parse option_spec anon_spec "usage: lepton [-format_with formatter] [filename] [-o output]";;
+@ 
+\item calling the lexical analyzer and interpreting the chunk contents.
+<<main.ml>>=
+let chunks = Lexer.shabang (Lexing.from_channel !lepton_ic);;
+let interpreter = function
+  | Code (args, _) when args.(0) = "lepton_options" -> ignore(parse_chunklabel args); (* special chunk *)
+  | Code (args, s) -> let option = parse_chunklabel args in
+		      let plain, expanded = Lexer.expand "" "" (Lexing.from_string s) in
+		      if option.write then send_to_file expanded args.(0);
+		      let output = send_to_interpreter expanded option.interpreter in
+		      if option.expand then !formatter args.(0) option [] expanded output
+		      else !formatter args.(0) option (Lexer.chunkref_list (Lexing.from_string s)) plain output;
+  | Doc s -> Lexer.lexpr (Lexing.from_string s);
+in Queue.iter interpreter chunks;;
+@ 
+\end{itemize}
+
+\subsection{Lepton module}
+\label{sec:lepton_module}
+
+The \verb Lepton  module implements the common interfaces for all the other modules. It contains
+\begin{itemize}
+\item the type definitions,
+\item the type of options and related functions,
+\item the storage mechanism based on hash tables,
+\item communication channels with files and processes,
+\item variables for inter-module communication.
+\end{itemize}
+
+The lexical analyzer divides the \lepton\ file in a series of block of type \verb chunk . These are either \verb Doc  blocks that contain documentation, or \verb Code  blocks that contain the chunk header as a \verb|string array| and the source code.
+<<lepton.ml -write >>=
+<<boilerplate>>
+type chunk = Doc of string | Code of string array * string;;
+@ 
+
+We define the \verb option  type as well as two helper functions.
+<<lepton.ml>>=
+type option = {
+  mutable part_number : int;
+  mutable write : bool; mutable expand : bool; 
+  mutable chunk_format: string; mutable output_format: string;
+  mutable interpreter : string;
+};;
+let option_copy o = {o with part_number = 0};; (* independent copy of the object *)
+let option_print name o = 
+  Printf.printf "%s (part %i%s%s):\t" name o.part_number (if o.expand then " expand" else "") (if o.write then " write" else "");
+  Printf.printf "chunk as %s, " o.chunk_format;
+  if o.interpreter <> "none" then Printf.printf "exec with %s, output as %s, " o.interpreter o.output_format;  
+  Printf.printf "\n%!";;
+@ 
+
+\verb|make_get_item| is a generic storage function based on hash tables. \verb|make_get_item| creates a hidden vault, initially populated with \verb initial  (key,value) pairs. \verb|make_get_item| returns a function for accessing the elements in the vault. When the requested an item from the vault is not found, a new item is added via the \verb fnew  function. 
+<<lepton.ml>>=
+let make_get_item initial fnew = let open Hashtbl in
+  let storage = create 30 in List.iter (fun (key,value) -> add storage key value) initial;
+  fun key -> try find storage key with Not_found -> (add storage key (fnew key); find storage key);;
+@ 
+
+\lepton\ uses vaults created by \verb|make_get_item| for 
+\begin{itemize}
+\item associating chunk names with the concatenated chunk contents. These are stored as extensible buffers; the lexical analyzer appends chunk contents to these buffers,
+<<lepton.ml>>=
+let get_chunk = make_get_item [] (fun (s:string) -> Buffer.create 100);;
+@ 
+\item associating chunk names with their options. The function is itself hidden in the \verb parse_chunklabel  function defined in \ref{lepton.ml6},
+\item associating chunk names with output channels when writing to disk, 
+<<lepton.ml>>=
+let send_to_file = let get_file = make_get_item [] open_out in 
+  fun msg file_name -> let oc = (get_file file_name) in output_string oc msg; flush oc;;
+@ 
+\item associating process names with a process (see chunk \ref{lepton.ml7}).
+\end{itemize}
+
+The following functions are responsible for transforming the chunk header into a value of type \verb option . This happens in two stages. During lexical analysis, the chunk header is transformed into a \verb|string array| by the \verb split_header  function. In particular, this extracts the chunk name as first element of this array.\\
+The \verb parse_chunklabel  function is called during chunk interpretation. For each chunk, the option vault is queried for a previous chunk with the same name, or the current default options. These options are then modified and stored in the option vault according to the current chunk header. Global default options are implemented as the special chunk name \verb|lepton_options| and can be modified with a chunk of that name.
+<<lepton.ml>>=
+let split_header = fun s -> Array.of_list (Str.split (Str.regexp "[ \t]+") s);;
+let parse_chunklabel = (* Parse the chunk label into name, option structure *)
+  let defaults = { part_number=0; write=false; expand=false; chunk_format="text"; output_format="hide"; interpreter="none"; } in
+  let get_option = make_get_item [("lepton_options",defaults)] (fun _ -> option_copy defaults) in
+  function args ->
+    let o = get_option args.(0) in o.part_number <- o.part_number + 1;
+    let option_spec = 
+      ("-write", Arg.Unit (fun _ -> o.write <- true) , "write chunk to disk") :: 
+      ("-nowrite", Arg.Unit (fun _ -> o.write <- false) , "do not write chunk to disk (default)") :: 
+      ("-expand", Arg.Unit (fun _ -> o.expand <- true) , "expand chunk in documentation") ::
+      ("-noexpand", Arg.Unit (fun _ -> o.expand <- false) , "do not expand chunk in documentation (default)") ::
+      ("-chunk", Arg.String (fun s -> o.chunk_format <- s), "chunk type for pretty-printing") ::
+      ("-output", Arg.String (fun s -> o.output_format <- s), "output type for pretty-printing") ::
+      ("-exec", Arg.String (fun s -> o.interpreter <- s; o.output_format <- "text"), "send chunk to external interpreter") :: [] in
+    Arg.parse_argv ~current:(ref 0) args option_spec (fun _ -> ()) "Wrong option in chunk header.\nusage : "; option_print args.(0) o; o;;
+@ 
+
+The mechanism for external interpretation works as follows. The \verb send_to_interpreter  function hides a process vaults which contains functions that execute code and return the output as a string. When the process name is not found in the vault, a new process / instance must be created. The process name is matched by prefix to a list of process creators. We provide a \verb make_process_creator  function for convenience. It is documented in Section \ref{sec:interpreters}. Note that the function \verb|make_get_item| is not used for the list of process creators because matching happens by prefix.
+<<lepton.ml>>=
+let process_creators = ref [("none",fun () -> (fun (s:string) -> ""))];;
+let register_process_creator name f = process_creators := (name,f) :: !process_creators;;
+let send_to_interpreter = (* return output of external chunk interpretation *)
+  let rec assoc_prefix name = function
+    | (key,value)::_ when String.length name >= String.length key && key = String.sub name 0 (String.length key) -> value 
+    | a :: b -> assoc_prefix name b | [] -> failwith ("send_to_interpreter : cannot find " ^ name) in
+  let get_process = make_get_item [] (fun process_name -> (assoc_prefix process_name !process_creators) ()) in
+  fun msg process_name -> (get_process process_name) msg;;
+<<make_process_creator>>
+@ 
+
+Finally, we define the following variables that are used for communicating between the main functions and the modules. In particular, \verb formatter  is populated at runtime depending on the command-line option.
+<<lepton.ml>>=
+let lepton_ic = ref stdin;;
+let lepton_oc = ref stdout;; 
+let formatter = ref (fun (name:string) o (l:string list) (chunk:string) (output:string) -> ignore(o.write) );;
+@ 
+
+\subsection{Lexing equals syntax}
+\label{sec:lexer}
+
+The lexical analyzer is responsible for transforming a stream of characters (from the \lepton\ file) into a series of chunks. 
+
+\begin{specification}
+\label{spec_syntax}
+<<spec_syntax -chunk verb>>=
+In the spirit of literate programming \cite{knuth84literateprogramming}, \lepton\ files are written in a documentation format such as \LaTeX, HTML or Wiki markup with special blocks called \emph{code chunks}.
+
+Similar to Noweb files \cite{ramsey1994literate}, code chunks start with a chunk header of the form \verb|<<header>>=| at the beginning of the line, and end with \verb @  at the beginning of the line. \lepton\ parses the chunk header as a blank separated command line, and the first word is treated as the chunk name. The following words are interpreted as chunk options. These control the output and interpretation of the chunk contents. See Section \ref{sec:interpretation} for further details.x
+
+Code chunks contain any type of textual bits and pieces, including source code, input data, executable instructions and nested code chunks. This allows embedding \lepton\ files inside other \lepton\ files, such as the \verb hello.nw  \hyperref[hello.nw]{example} in Section \ref{sec:tutorial}. Inside a code chunk, \verb @@  at the beginning of a line is replaced by a single \verb @ , but not for nested chunks.
+
+\lepton\ does not alter the contents of the input file, except for the following directives :
+\begin{itemize}
+\item The chunk header is formatted into the selected documentation format.
+\item A series of blanks followed by \verb <<chunkname>>  inside a code chunk represents a chunk reference, and is expanded to the contents of the code chunk \verb chunkname .
+\item \texttt{\textbackslash Linput\{filename\}} at the beginning of a line outside a code chunk is replaced by the contents of the file. This is performed before interpretation, so everything defined in \verb|filename| is available ; code chunks can be executed and can be referenced.
+\item \texttt{\textbackslash Lexpr\{interpreter\}\{code\}} outside a code chunk is used to directly embed the results of sending the \verb code  as commands to the \verb interpreter . This can be used to include the value of variables or results in the text.
+\end{itemize}
+
+Code chunks can be divided into small meaningful entities that are easy to document. Code chunks can be written in several parts. Options defined in the chunk header are propagated to the following parts. \\
+Chunk references are replaced by the concatenation of all chunks with the same name, including the recursive references. The amount of whitespace before the chunk reference is used to set the indentation level: it is prepended to all lines when expanding the reference.
+
+N.B. Characters appearing on the same line after a chunk header, a chunk end, a chunk reference, a \verb \Linput  are ignored and can be used for comments.
+@ 
+\end{specification}
+
+We first define variables and regular expressions.
+<<lexer.mll -write>>=
+<<boilerplate>>
+{ open Hashtbl;;  open Buffer;; open Lepton;;
+  let accu = Queue.create ();; let buffer = create 100;;
+}
+let char = [^ '\n']
+let blank = [' ' '\t']
+let chunk_start = "<<" (char* as h) ">>=" char* "\n"? as s
+let linput = "\\Li" "nput{" (char* as file) "}" char* "\n"? as s
+let lexp = "\\L" "expr{" ([^ '}' '\n']* as process) "}{" ([^ '}' '\n']* as code) "}"
+let chunk_ref = (blank* as b) "<<" (char* as h) ">>" char* "\n"? as s
+@ 
+
+The lexical analysis of a \lepton\ file is composed of two main rules. The \verb lexer  rule is used when lexing documentation. In this state, only the \verb linput  directive is recognized. The \verb chunk_start  lexeme opens a chunk block. \\
+The \verb gobble  rule reads the character stream until the end of code chunk; it uses the integer variable \verb level  to track the nesting level of code chunks. This rule ignores \verb @@  at the beginning of a line in the first pass to preserve the nesting structure. \\
+Lexing a file starts with the \verb shabang  rule that ignores the first line when it starts with \verb #! , starts lexing in documentation mode, and add any trailing content.
+<<lexer.mll -write>>=
+rule shabang = parse    | ("#!" char* "\n")? { lexer lexbuf; Queue.add (Doc (contents buffer)) accu; accu}
+and lexer = parse
+    | chunk_start { Queue.add (Doc (contents buffer)) accu; clear buffer;
+		    let a = split_header h in ignore(gobble 1 lexbuf); add_buffer (get_chunk a.(0)) buffer; 
+		    Queue.add (Code (a,contents buffer)) accu; clear buffer; lexer lexbuf }
+    | linput { lexer (Lexing.from_channel (open_in file)); lexer lexbuf }
+    | char* "\n"? as s { add_string buffer s; lexer lexbuf } | eof {}
+and gobble level = parse
+    | chunk_start            { add_string buffer s; gobble (level+1) lexbuf }
+    | "@@" char* "\n"?  as s { add_string buffer s; gobble level lexbuf }
+    | "@"  char* "\n"?  as s { if (level > 1) then (add_string buffer s; gobble (level-1) lexbuf) else s;}
+    |      char* "\n"?  as s { add_string buffer s; gobble level lexbuf }
+    | eof                    { failwith "Lexing : eof not permitted in gobble mode";}
+@ 
+
+To keep all the syntax elements in the same file, we define the \verb lexpr  and \verb expand  rules that respectively interpret the contents of documentation chunks and code chunks. \verb lexpr  enables embedded code in documentation blocks and replaces \verb lexp  with the code output. \verb expand  performs recursive expansion of references in code chunks.\\
+The \verb expand  rule uses two temporary strings for storing the plain version (with \verb @@  replaced by \verb @ ) and the expanded versions of chunk contents. The \verb gobble  rule is used in \verb expand  to determine the limits of a nested chunk. Unlike in the documentation case, the chunk start and the chunk end lines must appear in \verb bplain  and \verb bexp .
+<<lexer.mll -write>>=
+and lexpr = parse
+    | lexp { output_string !lepton_oc (send_to_interpreter (code^"\n") process); lexpr lexbuf;}
+    | _ as c { output_char !lepton_oc c; lexpr lexbuf; } | eof { flush !lepton_oc; }
+and expand bplain bexp = parse
+    | chunk_start  { clear buffer; let l = gobble 1 lexbuf in 
+		     expand (bplain^s^(contents buffer)^l) (bexp^s^(contents buffer)^l) lexbuf; }
+    | chunk_ref { let h_contents = contents (get_chunk h) in 
+		  if String.length h_contents = 0 then Printf.printf "WARNING: ref <<%s>> is empty or missing.\n%!" h;
+		  let _,expanded = expand "" "" (Lexing.from_string h_contents) in 
+		  let indented = String.concat "" (List.map (fun s -> b^s^"\n") (Str.split (Str.regexp_string "\n") expanded)) in 
+		  expand (bplain^s) (bexp^indented) lexbuf; }
+    | "@@" (char* "\n"? as s) { expand (bplain^"@"^s) (bexp^"@"^s) lexbuf; }
+    |       char* "\n"?  as s { expand (bplain^s) (bexp^s) lexbuf; } | eof {bplain,bexp}
+and chunkref_list = parse
+    | chunk_start { gobble 1 lexbuf; chunkref_list lexbuf; }
+    | chunk_ref   { h :: chunkref_list lexbuf; }
+    | char* "\n"? { chunkref_list lexbuf; } | eof { [] }
+
+@ 
+
+\verb lexer.mll  does not contain legitimate OCaml code. It must be processed by \verb ocamllex  to produce the actual lexer in the file \verb lexer.ml . The actual lexer is implemented as a Deterministic Finite Automaton for efficiency. 
+
+N.B. Lexical analyzers can only take into account the past context; you need a syntax analyzer or parser to look at the downstream context.
+
+
+<<shell -exec shell>>=
+ocamllex lexer.mll
+@ 
+
+\subsection{External interpreters}
+\label{sec:interpreters}
+
+\begin{specification}
+\label{spec_interpretation}
+<<spec_interpretation -chunk verb>>=
+\label{sec:interpretation}
+
+The contents of code chunks are interpreted as specified by the options in the chunk header:
+\begin{itemize}
+\item \verb|-write -nowrite| : write the chunk contents to disk and use the chunk name as file name. Default: \verb -nowrite ,
+\item \verb|-expand -noexpand| : expand chunk references in the documentation. Default: \verb -noexpand ,
+\item \verb|-exec interpreter| : execute the chunk contents in an external interpreter. Default: \verb none , i.e.\ do not execute,
+\item \verb|-chunk format -output format| : indicate the format of chunk contents and chunk output for pretty-printing (see Section \ref{spec_formatting}).
+\end{itemize}
+
+\lepton\ interprets the source file sequentially. For each chunk, the references are recursively expanded, then the chunk contents are optionally written to disk, and the chunk contents are optionally sent to the external interpreter. In particular, written files and definitions sent to an interpreter are available for the subsequent code chunks. When launched in a terminal, \lepton\ displays the chunk names, and the options used to process them.
+    
+When writing to disk, relative paths and full paths can be used for the file name. However, \lepton\ does not create the parent directories when absent.
+
+The \verb interpreter  specified with \verb -exec  or \texttt{\textbackslash Linput} is a session / process name. If it corresponds to a process already open by \lepton, the process will be reused. Otherwise, the interpreter name is matched (by prefix) to a list of known intepreters and a new instance is launched. \lepton\ currently supports the UNIX shell, OCaml, Python, and R. Several sessions of the same process can be open concurrently, e.g.\ \verb|shell1, shell2, shellbis|. 
+
+Other programming languages, notably compiled languages such as C/C++, can be used in \lepton\ by writing the source code to disk and using the \verb shell  interpreter to compile and execute the programs. To use a makefile, put the text into a chunk, write the chunk to disk and execute with \verb shell .
+
+Options that are set for a code chunk are propagated to the following chunks of the same name.
+\verb lepton_options  is a reserved chunk name for setting default options. For example, 
+\verb|<<lepton_options -write -chunk ocaml>>=| sets the default behavior to writing all chunk contents to disk, and formatting the chunk contents as OCaml code.  The chunk contents are ignored. 
+@ 
+\end{specification}
+
+The \verb interpreters.ml  file contains the definition of all recognized external interpreters. More precisely, it contains process creators, i.e.\ functions for creating a new instance of a given interpreter. Each process creator must be registered in the \verb|process_creators| list (see \ref{lepton.ml7}).
+
+Most process creators can be created by the following function. We first launch the new instance of the process with \verb open_process , and retrieve the input and output channels. We then create a function that sends data to the input channel and reads from the output channel. \\
+The main difficulty is that we let a process run in the background so that further instructions can be executed in the same environment. Consequently, the output channel is not closed, and reading from this channel results in a deadlock. To escape from this situation, and continue to interpret the \lepton\ file, we send a question to the interpreter after the chunk contents, and read from the output channel until we get the expected answer.\\
+In the current implementation, reading from the output channel happens line by line. The answer is a string. Everything that follows the answer is ignored.
+
+<<make_process_creator>>=
+let make_process_creator open_process question answer = fun () -> 
+  let (oc_in,oc_out) = open_process () and l = ref "" and b = Buffer.create 10 in 
+  let rexp_answer = Str.regexp ("\\(.*\\)"^answer) in
+  fun msg -> Printf.fprintf oc_out "%s%s%!" msg question; (* Printf.printf "%s%s%!" msg question; *)
+    Buffer.clear b; while (l := input_line oc_in;not (Str.string_match rexp_answer !l 0)) 
+      do Buffer.add_string b (!l ^ "\n") done; Buffer.contents b ^ Str.matched_group 1 !l;;
+@ 
+
+The process creators for the UNIX shell, Python and R interpreters are easily defined. Note that most interpreters require a newline character to terminate the question.
+<<interpreters.ml -write>>=
+<<boilerplate>>
+open Lepton;;
+let str = string_of_float (Random.float 1.);;
+register_process_creator "shell" (make_process_creator (fun _ -> Unix.open_process "sh") ("echo \"" ^ str ^ "\"\n") str) ;;
+register_process_creator "python" (make_process_creator (fun _ -> Unix.open_process "python -i") ("print \"" ^ str ^ "\"\n") str);;		     
+register_process_creator "R" (make_process_creator (fun _ -> Unix.open_process "R --slave") ("cat(\"" ^ str ^ "\\n\")\n") str);;
+@ 
+
+The OCaml process creator is more complex. We must set the \verb TERM  environment variable to empty, otherwise the interpreter assumes a full-fledged UNIX terminal and outputs color codes. Additionally, we suppress the first two lines that correspond to the OCaml version.
+<<interpreters.ml>>=
+let ocaml_creator = 
+  let open_proc = fun _ -> 
+    (let oc_in,oc_out,oc_err = Unix.open_process_full "ocaml -noprompt" [|"TERM="|] in
+    ignore(input_line oc_in); ignore(input_line oc_in); oc_in, oc_out ) in
+  make_process_creator open_proc ("print_float " ^ str ^ ";;\n") (str^"- : unit = ()")
+in register_process_creator "ocaml" ocaml_creator;;
+@ 
+
+This is the Scilab interpreter. Communication with Scilab requires non-blocking pipes.
+<<interpreters.ml>>=
+let scilab_open = fun _ ->
+  let entrypipe_r, entrypipe_w = Unix.pipe() and exitpipe_r, exitpipe_w = Unix.pipe() in Unix.set_nonblock entrypipe_r;
+  let oc_in = Unix.in_channel_of_descr exitpipe_r and oc_out = Unix.out_channel_of_descr entrypipe_w in
+  ignore(Unix.create_process_env "scilab-cli" [| "scilab-cli" |] [|"SCIHOME=/tmp"|] entrypipe_r exitpipe_w exitpipe_w);
+  oc_in,oc_out;;
+register_process_creator "scilab" (make_process_creator scilab_open ("disp(\"325\");\n") ("325"));;
+@ 
+
+% This is the Julia interpreter. \url{http://julialang.org/}
+% <<interpreters.ml>>=
+% let julia_open = fun _ ->
+%   let entrypipe_r, entrypipe_w = Unix.pipe() and exitpipe_r, exitpipe_w = Unix.pipe() in Unix.set_nonblock entrypipe_r;
+%   let oc_in = Unix.in_channel_of_descr exitpipe_r and oc_out = Unix.out_channel_of_descr entrypipe_w in
+%   ignore(Unix.create_process_env "julia" [| "julia";"-q";"--color=no"|] [|"HOME=."|] entrypipe_r exitpipe_w exitpipe_w);
+%   oc_in,oc_out;;
+% register_process_creator "julia" (make_process_creator julia_open ("\nprintln(\"" ^ str ^ "\")\n") str);;
+% @ 
+
+
+\subsection{Documentation formatters}
+\label{sec:formatters}
+
+\begin{specification}
+<<spec_formatting -chunk verb>>=
+\label{spec_formatting}
+
+The \verb formatter  is responsible for presenting the contents of code chunks and their results in a format compatible with the documentation format. For instance, it packs source code in a verbatim environment for \LaTeX\ or inside \verb <pre></pre>  tags for HTML. Chunk contents and chunk output are independently formatted according to their respective options. 
+
+A \verb formatter  is implemented as a function that receives the chunk name, options, the chunk contents and the output and produces some text to be included in the documentation file. \lepton\ includes the \verb latex_minted  formatter for inclusion in \LaTeX\ and code pretty-printing with Pygments, the \verb latex_verbatim  formatter for inclusion in \LaTeX\ and inclusion of code in a \verb verbatim  environment, as well as the \verb html  and \verb creole  formatters for HTML and Wiki markup.
+
+The predefined formatters recognize special values of the output format: \verb verb  (the output is already formatted and intended for direct inclusion) and \verb hide  (the output is not included). For pretty-printing in \LaTeX , we use the \verb minted  package in combination with the Python \verb Pygments  beautifier \cite{Pygments} to provide colorful syntax highlighting for many languages (See the rendered \verb hello.pdf  in Section \ref{sec:tutorial}). The \texttt{latex\_minted} formatter  wraps the chunk contents and its output in a \verb leptonfloat  environment, which is based on the \verb float  package (see below). Additionally, 
+\begin{itemize}
+\item a caption is automatically included based on the chunk name,
+\item labels and indexes are automatically defined, the \verb hyperref  package can be used to link to chunk definitions,
+\item for each chunk reference, \lepton\ automatically adds a hyperlink to the corresponding chunk definition.
+\end{itemize}
+A list of all code chunks can be generated with \verb|\lelistoflistings| and an index of code chunks with \verb makeidx . These additions to \LaTeX\ are defined in the \verb lepton.sty  file.
+@   
+\end{specification}
+
+Note that current formatters are not aware of nesting, and may insert incorrect links and references.
+
+<<formatters.ml -write>>=
+<<boilerplate>>
+open Printf;; open Lepton;;
+let tex = let r = Str.regexp_string "_" in fun s -> Str.global_replace r "\\_" s ;;
+let send_to_latex_minted = fun name o reflist chunk output ->
+  let plain s = fprintf !lepton_oc "%s%!" s
+  and leptonchunk s = function | "hide" -> () | "verb" -> fprintf !lepton_oc "%s%!" s;
+    | format -> fprintf !lepton_oc "\\b\101gin{minted}[frame=single,fontsize=\\footnotesize]{%s}\n%s\\\101nd{minted}\n%!" format s
+  and leptonfloat_begin () = 
+    fprintf !lepton_oc "\\b\101gin{leptonfloat}\n\\caption{%s%s}\n\\label{%s}\n%!"
+      (tex name) (if o.part_number = 1 then "" else sprintf " (part %i)" o.part_number)
+      (if o.part_number = 1 then name else name ^ string_of_int o.part_number);
+    fprintf !lepton_oc "\\vspace*{2pt}\\footnotesize{\\texttt{%s}}\\vspace*{-3pt}\n%!" 
+      (String.concat "\\, " (List.map (fun d -> Printf.sprintf "\\index{%s}\\hyperref[%s]{%s}" (tex d) d (tex d)) reflist));
+  and leptonfloat_end () = fprintf !lepton_oc "\\\101nd{leptonfloat}\n%!"; in
+  match o.chunk_format with
+    | "hide" | "verb" -> if o.chunk_format = "verb" then plain chunk;
+      if o.interpreter <> "none" then leptonchunk output o.output_format
+    | f1 -> leptonfloat_begin (); leptonchunk chunk f1; 
+      match o.interpreter,o.output_format with
+	| "none",_ |  _, "hide" -> leptonfloat_end ();
+	| _, "verb" -> leptonfloat_end (); plain output;
+	| _, f2 -> plain ("\\vspace*{-4pt}Interpret with \\texttt{" ^ tex o.interpreter ^ "}\\vspace*{-4pt}\n"); 
+	  leptonchunk output f2; leptonfloat_end ();
+;;
+@ 
+
+Here is an example of a chunk formatted by \verb latex_minted .
+\begin{verbatim}
+<<tex_output -exec shell -chunk hide -output verb>>=
+head lepton.tex -n 79 | tail -n 9
+@ 
+\end{verbatim}
+
+<<formatters.ml>>=
+let substitute_split s rexp ftext fdelim = let open Str in
+  String.concat "" 
+    (List.map (function | Text m -> ftext m | Delim m -> ignore (string_match rexp m 0); fdelim m) (full_split rexp s))
+;;
+let rexp_ref = Str.regexp "^\\([ \t]*\\)<\060\\(.*\\)>>\n";;
+let tex = let r = Str.regexp_string "_" in fun s -> Str.global_replace r "\\_" s ;;
+let send_to_tex name o reflist chunk output = (* echo to documentation, in plain TeX format *)
+  let plain s = Printf.fprintf !lepton_oc "%s%!" s
+  and leptonchunk s = function | "hide" -> () | "verb" -> Printf.fprintf !lepton_oc "%s%!" s;
+    | format -> Printf.fprintf !lepton_oc "\\b\101gin{verbatim}%s\n\\\101nd{verbatim}\n%!" s
+  and leptonfloat_begin () = 
+    Printf.fprintf !lepton_oc "\\b\101gin{leptonfloat}\n\\caption{%s%s}\n\\label{%s}\n"
+      (tex name) (if o.part_number = 1 then "" else Printf.sprintf " (part %i)" o.part_number)
+      (if o.part_number = 1 then name else name ^ string_of_int o.part_number);
+    Printf.fprintf !lepton_oc "\\vspace*{2pt}\\footnotesize{\\texttt{%s}}\\vspace*{-3pt}\n" 
+      (substitute_split chunk rexp_ref (fun _ -> "") (fun d0 -> let d = Str.matched_group 2 d0 in Printf.sprintf "\\index{%s}\\hyperref[%s]{%s}\\, " (tex d) d (tex d))); 
+  and leptonfloat_end () = Printf.fprintf !lepton_oc "\\\101nd{leptonfloat}\n%!"; in
+  match o.chunk_format with
+    | "hide" | "verb" -> if o.chunk_format = "verb" then plain chunk;
+      if o.interpreter <> "none" then leptonchunk output o.output_format
+    | f1 -> leptonfloat_begin (); leptonchunk chunk f1; 
+      match o.interpreter,o.output_format with
+	| "none",_ |  _, "hide" -> leptonfloat_end ();
+	| _, "verb" -> leptonfloat_end (); plain output;
+	| _, f2 -> plain ("\\vspace*{-4pt}Interpret with \\texttt{" ^ tex o.interpreter ^ "}\\vspace*{-4pt}\n"); 
+	  leptonchunk output f2; leptonfloat_end ();
+;;
+@ 
+
+<<formatters.ml -write>>=
+let send_to_html name o reflist chunk output = 
+  begin match o.chunk_format with
+    | "hide" -> ()
+    | _ -> Printf.fprintf !lepton_oc "\n<pre id=leptonchunk>\n%s</pre>\n%!" chunk ; end;
+  begin match o.output_format with
+    | "hide" -> ()
+    | _ -> Printf.fprintf !lepton_oc "\n<pre id=leptonoutput>\n%s</pre>\n%!" output ; end;      
+;;
+@ 
+
+<<formatters.ml>>=
+let send_to_creole name o reflist chunk output = 
+  begin match o.chunk_format with
+    | "hide" -> ()
+    | _ -> Printf.fprintf !lepton_oc "\n{{{\n%s}}}\n%!" chunk ; end;
+  begin match o.output_format with
+    | "hide" -> ()
+    | _ -> Printf.fprintf !lepton_oc "\n{{{\n%s}}}\n%!" output ; end;      
+;;
+@ 
+
+The default formatter is set to \verb latex_minted . The \verb set  function is used for parsing the command-line.
+<<formatters.ml>>=
+Lepton.formatter := send_to_latex_minted;;
+let set = function
+  | "latex_minted" -> Lepton.formatter := send_to_latex_minted
+  | "tex"          -> Lepton.formatter := send_to_tex
+  | "creole"       -> Lepton.formatter := send_to_creole
+  | "html"         -> Lepton.formatter := send_to_html
+  | _ -> failwith "unknown selected formatter";;
+@ 
+
+\section{Compilation}
+\label{sec:compile}
+
+The bytecode version is portable, but needs the Ocaml runtime for execution. It can be compiled with
+<<shell_compile -exec shell>>=
+ocamlc -o lepton_bytecode.bin str.cma dynlink.cma unix.cma lepton.ml lexer.ml interpreters.ml formatters.ml main.ml
+@ 
+
+The native code version is standalone.
+<<shell_compile -exec shell>>=
+ocamlopt -o lepton.bin str.cmxa dynlink.cmxa unix.cmxa lepton.ml lexer.ml interpreters.ml formatters.ml main.ml
+@ 
+
+\section{The \lepton\ manual}
+\label{sec:manual}
+
+\subsection{Manual structure}
+
+The manual is embedded in this document in such a way that 
+\begin{itemize}
+\item the program specifications appears near its implementation,
+\item only one instance appears in the source file,
+\item the specification appears both inside this document and a standalone manual.
+\end{itemize}
+
+The above requirements are implemented with Lepton in the following way. The manual is in fact composed of a series of chunks that describe the specification in \LaTeX\ syntax. Each of these fragments appears in the \verb lepton.nw  source file next to the corresponding implementation. The output is constructed by assembling the corresponding chunks:
+\begin{itemize}
+\item the specification appears by using the chunk option \verb|-chunk verb| for direct inclusion in the \LaTeX\ output.
+\item we produce a standalone manual by writing a complete \LaTeX\ file. (see below)
+\end{itemize}
+
+<<lepton_manual.nw -chunk tex -write>>=
+\documentclass[a4paper,10pt]{scrartcl}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{bbm}
+\usepackage{graphicx}
+\usepackage{stmaryrd}
+\usepackage[bindingoffset=0cm,width=19cm,height=28cm]{geometry}
+\usepackage{savetrees}
+% reduce lists and floats
+
+\input{lepton.sty}
+
+\begin{document}
+
+\section{The \lepton\ manual}
+\label{sec:manual}
+
+\subsection{Tutorial}
+\label{sec:tutorial}
+<<lepton_tutorial.nw>>
+
+\subsection{Usage and command-line options}
+<<spec_commandline>>
+
+\subsection{Syntax}
+<<spec_syntax>>
+
+\subsection{Interpretation of code snippets}
+<<spec_interpretation>>
+
+\subsection{Formatting}
+<<spec_formatting>>
+
+This is the \LaTeX\ code produced by the \verb latex_minted  formatter from the \verb hello_world  chunk in the tutorial.
+\begin{verbatim}
+<<tex_output -exec shell -chunk hide -output verb>>=
+head hello.tex -n 20 | tail -n 15
+@ 
+\end{verbatim}
+
+\subsection{Current implementation and availability}
+
+The current implementation is written as a \lepton\ file with source code in the OCaml programming language. 
+The Lepton code can be compiled to native code for speed on many architectures, and requires no external libraries. 
+
+Standalone binaries are available for GNU/Linux 32-bit and 64-bit platforms and can be downloaded from 
+\url{http://www.math.univ-paris13.fr/~lithiao/Lepton.html}. For other platforms such as Windows, external command execution is missing.
+
+\bibliographystyle{alpha}
+\bibliography{biblio_lepton}
+
+\end{document}
+@  
+
+<<compile_manual -exec shell -chunk sh -output hide>>=
+./lepton.bin lepton_manual.nw -o lepton_manual.tex
+pdflatex -shell-escape lepton_manual.tex
+bibtex lepton_manual.aux
+pdflatex -shell-escape lepton_manual.tex
+pdflatex -shell-escape lepton_manual.tex  # LaTeX needs to execute twice to resolve references
+@ 
+
+\subsection{Tutorial}
+\label{sec:tutorial}
+\label{lepton_tutorial.nw}
+
+<<lepton_tutorial.nw -chunk hide -write>>=
+\lepton\ processes files written in \LaTeX-like syntax. 
+To write a ``hello world'' manuscript, the first step is to write a \verb hello.nw  file containing:
+
+<<hello.nw -write -chunk tex>>=
+\documentclass[paper=a7]{scrartcl}
+\usepackage[width=7cm,height=10cm]{geometry}
+\input{lepton.sty}
+\begin{document}
+The code below sends "hello world" instructions to the \verb ocaml  interpreter.
+<<hello_world -exec ocaml>>=
+let msg = "Hello world.";;
+print_string(msg); print_newline();;
+@ 
+\end{document}
+@ 
+
+\hspace*{-0.7cm}
+\begin{minipage}{0.7\linewidth}
+The second step is to apply \lepton. This tool splits the file into documentation 
+and source code, executes instructions where specified, and embeds the results. 
+\lepton\ turns \verb hello.nw  into a legitimate \LaTeX\ document \verb hello.tex . 
+When processing a file, \lepton\ outputs the name of each encountered code snippet 
+and how it deals with it.
+
+<<hello.tex -exec shell>>=
+lepton hello.nw -o hello.tex
+@ 
+
+The last step is to compile using \verb pdflatex . The \verb -shell-escape  option 
+enables colorful pretty-printing with the \verb minted  \LaTeX\ package. The resulting 
+PDF file is displayed on the right.
+<<hello.pdf -exec shell>>=
+pdflatex -interaction batchmode -shell-escape hello.tex
+@   
+\end{minipage}
+\begin{minipage}{0.3\linewidth}
+  \centering
+  \fbox{  \includegraphics[width=\linewidth]{hello.pdf}}
+\end{minipage}
+@ 
+
+<<shell_tuto -exec shell -chunk hide -output verb>>=
+./lepton.bin lepton_tutorial.nw -o lepton_tutorial.tex > /dev/null
+cat lepton_tutorial.tex
+@ 
+
+
+\bibliographystyle{alpha}
+\bibliography{biblio_lepton}
+
+
+
+
+\end{document}

@@ -1,0 +1,22 @@
+\usepackage{minted}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{makeidx}
+\makeindex
+
+\newcommand{\lepton}{Lepton}
+\makeatletter
+\renewcommand\floatc@ruled[2]{{\bfseries #1:} \texttt{\flqq\relax#2\frqq}\par}
+\renewcommand\fs@plaintop{\fs@plain
+  \let\@fs@capt\floatc@ruled
+  \def\@fs@pre{\relax\vspace*{-5pt}}%
+  \def\@fs@mid{\relax}%
+  \def\@fs@post{\relax\vspace*{-5pt}}%
+  \let\@fs@iftopcapt\iftrue}
+\floatname{leptonfloat}{Code chunk}
+\newcommand\lelistoflistingscaption{\lepton\ : List of listings}
+\providecommand\lelistoflistings{\listof{leptonfloat}{\lelistoflistingscaption}}
+\makeatother
+\floatstyle{plaintop}
+\newfloat{leptonfloat}{H}{lol}
+\newminted[leptonchunk]{ocaml}{frame=single,fontsize=\footnotesize}
