@@ -6,14 +6,13 @@
 \usepackage{graphicx}
 \usepackage{stmaryrd}
 \usepackage[bindingoffset=0cm,width=19cm,height=28cm]{geometry}
-\usepackage[title=normal,sections=normal]{savetrees}
-% reduce lists and floats
+\usepackage[moderate]{savetrees}
+\usepackage[numbers]{natbib}
 
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{amsthm}
-\usepackage{hyperref}
 \usepackage{fancybox}
 
 <<lepton.sty -chunk hide -write>>=
@@ -511,7 +510,7 @@ let send_to_latex_minted = fun name o reflist chunk output ->
   and leptonchunk s = function | "hide" -> () | "verb" -> fprintf !lepton_oc "%s%!" s;
     | format -> fprintf !lepton_oc "\\b\101gin{minted}[frame=single,fontsize=\\footnotesize]{%s}\n%s\\\101nd{minted}\n%!" format s
   and leptonfloat_begin () = 
-    fprintf !lepton_oc "\\b\101gin{leptonfloat}\n\\caption{%s%s}\n\\label{%s}\n%!"
+    fprintf !lepton_oc "\\b\101gin{leptonfloat}\n\\caption{%s%s}\\label{%s}\n%!"
       (tex name) (if o.part_number = 1 then "" else sprintf " (part %i)" o.part_number)
       (if o.part_number = 1 then name else name ^ string_of_int o.part_number);
     fprintf !lepton_oc "\\vspace*{2pt}\\footnotesize{\\texttt{%s}}\\vspace*{-3pt}\n%!" 
@@ -532,7 +531,7 @@ let send_to_latex_minted = fun name o reflist chunk output ->
 Here is an example of a chunk formatted by \verb latex_minted .
 \begin{verbatim}
 <<tex_output -exec shell -chunk hide -output verb>>=
-head lepton.tex -n 122 | tail -n 9
+head lepton.tex -n 123 | tail -n 12
 @ 
 \end{verbatim}
 
@@ -617,6 +616,16 @@ bibtex lepton.aux
 xelatex -shell-escape -8bit lepton.tex
 @ 
 
+\begin{specification}
+<<spec_availability -chunk verb>>=
+\label{spec_availability}
+Standalone binaries are available for GNU/Linux 32-bit and 64-bit platforms and can be downloaded from 
+\href{https://doi.org/10.5281/zenodo.1311587}{Zenodo} \cite{zenodo}. The software repository is on 
+\href{https://github.com/slithiaote/lepton}{Github}. \lepton\ is unavailable on other 
+platforms such as Windows because external command execution is unimplemented.
+@ 
+\end{specification}
+
 \section{The \lepton\ manual}
 \label{sec:manual}
 
@@ -644,8 +653,9 @@ The above requirements are implemented with Lepton in the following way. The man
 \usepackage{graphicx}
 \usepackage{stmaryrd}
 \usepackage[bindingoffset=0cm,width=19cm,height=28cm]{geometry}
-\usepackage{savetrees}
-% reduce lists and floats
+\usepackage[bibliography=normal]{savetrees}
+\usepackage[numbers]{natbib}
+\setlength{\bibsep}{0pt plus 0.3ex}
 
 \input{lepton.sty}
 
@@ -671,21 +681,21 @@ The above requirements are implemented with Lepton in the following way. The man
 <<spec_formatting>>
 
 This is the \LaTeX\ code produced by the \verb latex_minted  formatter from the \verb hello_world  chunk in the tutorial.
+\vspace*{-2mm}
 \begin{verbatim}
 <<tex_output -exec shell -chunk hide -output verb>>=
-head hello.tex -n 20 | tail -n 15
+head hello.tex -n 19 | tail -n 14
 @ 
 \end{verbatim}
 
 \subsection{Current implementation and availability}
 
 The current implementation is written as a \lepton\ file with source code in the OCaml programming language. 
-The Lepton code can be compiled to native code for speed on many architectures, and requires no external libraries. 
+The Lepton code can be compiled to native code for speed and requires no external libraries. 
 
-Standalone binaries are available for GNU/Linux 32-bit and 64-bit platforms and can be downloaded from 
-\url{http://www.math.univ-paris13.fr/~lithiao/Lepton.html}. For other platforms such as Windows, external command execution is missing.
+<<spec_availability>>
 
-\bibliographystyle{alpha}
+\bibliographystyle{plainnat}
 \bibliography{biblio_lepton}
 
 \end{document}
@@ -750,7 +760,7 @@ cat lepton_tutorial.tex
 @ 
 
 
-\bibliographystyle{alpha}
+\bibliographystyle{plainnat}
 \bibliography{biblio_lepton}
 
 
