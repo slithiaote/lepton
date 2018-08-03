@@ -85,7 +85,7 @@ lepton.first lepton.nw -o lepton.tex; xelatex --shell-escape -8bit lepton.tex
 \item generate full-featured documentation for source code and executable instructions.
 \end{itemize}
 
-This manuscript contains the implementation details of \lepton, documented as a \lepton\ file, with many helpful comments on the programming techniques used in the source code. In addition, the program specifications included in this document are used to produce the standalone PDF manual and a tutorial. The software is published under the CeCILL-B license.
+This manuscript contains the implementation details of \lepton, documented as a \lepton\ file, with many helpful comments on the programming techniques used in the source code. In addition, the program specifications included in this document are used to produce the standalone PDF manual and a tutorial. The software is published under the CeCILL-2.1 license.
 
 <<boilerplate -chunk text>>=
 (* 
