@@ -22,13 +22,21 @@ this fact, D. Knuth [@Knuth84literateprogramming] proposed the literate programm
 paradigm, i.e. that source code and documentation should be written at the
 same time, inside the same file, and in a format designed for human understanding.
 
-''Lepton'' adds documents such as data analysis reports and scientific papers to this
-vision. To enable reproducible research, ''Lepton'' makes it easy to include scripts
-or complete programs, compilation and execution instructions, as well as execution
-results in the same file. Offloading execution to ''Lepton'' makes the analysis
-operator-independent and easy to reproduce. In the spirit of literate programming,
+''Lepton'' is a tool for making research more reproducible by extending this vision
+to data analysis reports and scientific papers. ''Lepton'' makes it easy to include
+scripts or complete programs, compilation and execution instructions,
+as well as execution results in the same file. Offloading execution to ''Lepton'' makes
+the analysis operator-independent and easy to reproduce. In the spirit of literate programming,
 the plain text file format used by ''Lepton'' is intended to be human-understandable
 as opposed to machine-readable, and simple enough to be usable without the software.
+
+Among the current approaches proposed for reproducible research, ''Lepton'' focuses on
+- offline execution so that results are operator independent,
+- long-term maintainability of ''Lepton'' itself and the documents produced with it
+through a plain text format and a well documented reference implementation
+- adaptability : users are not tied to a single data analysis environment such as R, C or
+python but can use them concurrently, and users can document freely regardless of
+the constraints of the programming language.
 
 ''Lepton'' consists in a standalone executable that processes plain text files
 written in a documentation format such as HTML or LaTeX with optional blocks that
@@ -36,7 +44,7 @@ can contain files to be written to disk, source code or executable instructions.
 It is distributed in binary format [@zenodo] because its implementation is written
 as a ''Lepton'' file containing the full source code, manual and a tutorial.
 The public repository is hosted on [Github](https://github.com/slithiaote/lepton).
-Previous publications written using ''Lepton'' include [@LiThiaoTe20121723]
+Previous publications written using and about ''Lepton'' include [@LiThiaoTe20121723]
 and [@LiThiaoTe2012439].
 
 # References
