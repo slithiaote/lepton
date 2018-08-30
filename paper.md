@@ -22,8 +22,8 @@ this fact, D. Knuth [@Knuth84literateprogramming] proposed the literate programm
 paradigm, i.e. that source code and documentation should be written at the
 same time, inside the same file, and in a format designed for human understanding.
 
-''Lepton'' is a tool for making research more reproducible by extending this vision
-to data analysis reports and scientific papers. ''Lepton'' makes it easy to include
+''Lepton'' is a tool for writing reproducible research papers and similar documents
+by extending literate programming to data analysis reports. ''Lepton'' makes it easy to include
 scripts or complete programs, compilation and execution instructions,
 as well as execution results in the same file. Offloading execution to ''Lepton'' makes
 the analysis operator-independent and easy to reproduce. In the spirit of literate programming,
