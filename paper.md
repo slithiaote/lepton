@@ -30,7 +30,8 @@ the analysis operator-independent and easy to reproduce. In the spirit of litera
 the plain text file format used by ''Lepton'' is intended to be human-understandable
 as opposed to machine-readable, and simple enough to be usable without the software.
 
-Among the current approaches proposed for reproducible research, ''Lepton'' focuses on
+Among the current approaches proposed for reproducible research, ''Lepton'' focuses on:
+
 - offline execution so that results are operator independent,
 - long-term maintainability of ''Lepton'' itself and the documents produced with it
 through a plain text format and a well documented reference implementation
