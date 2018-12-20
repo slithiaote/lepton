@@ -33,6 +33,6 @@ as opposed to machine-readable, and simple enough to be usable without the softw
 ''Lepton'' consists in a standalone executable that processes plain text files
 written in a documentation format such as HTML or LaTeX with optional blocks that
 can contain files to be written to disk, source code or executable instructions.
-It is distributed in binary format because its implementation is written
-as a ''Lepton'' file containing the full source code, manual and a tutorial.
+It is distributed as a ''Lepton'' file containing the full source code, manual and a tutorial.
+The package contains an extracted copy of the source code that can be compiled without ''Lepton''.
 For more information, please read the PDF manual.

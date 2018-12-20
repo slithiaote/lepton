@@ -42,8 +42,8 @@ the constraints of the programming language.
 ''Lepton'' consists in a standalone executable that processes plain text files
 written in a documentation format such as HTML or LaTeX with optional blocks that
 can contain files to be written to disk, source code or executable instructions.
-It is distributed in binary format [@zenodo] because its implementation is written
-as a ''Lepton'' file containing the full source code, manual and a tutorial.
+It is distributed as a ''Lepton'' file containing the full source code, manual and a tutorial [@zenodo].
+The package contains an extracted copy of the source code that can be compiled without ''Lepton''.
 The public repository is hosted on [Github](https://github.com/slithiaote/lepton).
 Previous publications written using and about ''Lepton'' include [@LiThiaoTe20121723]
 and [@LiThiaoTe2012439].

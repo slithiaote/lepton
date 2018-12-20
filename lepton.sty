@@ -1,17 +1,20 @@
+% This file was generated from lepton.nw by lepton.bin
 \usepackage{minted}
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{makeidx}
 \makeindex
 
+\newlength{\leptonla} \newlength{\leptonlb} \newlength{\leptonlc} \newlength{\leptonld} \newlength{\leptonle} \newlength{\leptonlf} 
+\setlength{\leptonla}{1ex} \setlength{\leptonlb}{1ex} \setlength{\leptonlc}{1ex} \setlength{\leptonld}{1ex} \setlength{\leptonle}{1ex} \setlength{\leptonlf}{1ex}
 \newcommand{\lepton}{Lepton}
 \makeatletter
 \renewcommand\floatc@ruled[2]{{\bfseries #1:} \texttt{\flqq\relax#2\frqq}\par}
 \renewcommand\fs@plaintop{\fs@plain
   \let\@fs@capt\floatc@ruled
-  \def\@fs@pre{\relax\vspace*{-5pt}}%
+  \def\@fs@pre{\relax\vspace*{-\leptonla}}%
   \def\@fs@mid{\relax}%
-  \def\@fs@post{\relax\vspace*{-5pt}}%
+  \def\@fs@post{\relax\vspace*{-\leptonlb}}%
   \let\@fs@iftopcapt\iftrue}
 \floatname{leptonfloat}{Code chunk}
 \newcommand\lelistoflistingscaption{\lepton\ : List of listings}
