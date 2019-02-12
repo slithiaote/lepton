@@ -35,4 +35,34 @@ written in a documentation format such as HTML or LaTeX with optional blocks tha
 can contain files to be written to disk, source code or executable instructions.
 It is distributed as a ''Lepton'' file containing the full source code, manual and a tutorial.
 The package contains an extracted copy of the source code that can be compiled without ''Lepton''.
-For more information, please read the PDF manual.
+
+# Documentation
+- `lepton_manual.pdf` contains usage instructions
+- `lepton.pdf` contains the implementation details.
+
+# Installation
+The `lepton.bin` executable can be compiled with the included `make.sh` script. 
+
+Requirements
+- [OCaml](https://ocaml.org) > 4.0
+
+# Bootstrapping
+The contents of the installation package can be re-generated from the file `lepton.nw`. This will produce a new executable, extract copies of the source files, and compile the LaTeX documentation.
+
+Requirements
+- [LaTeX](https://www.latex-project.org/)
+- [Pygments](http://pygments.org) for syntax highlighting and the `minted` [LaTeX package](https://ctan.org/pkg/minted?lang=en)
+
+Steps :
+- process the main source file with Lepton `lepton lepton.nw -o lepton.tex`
+- compile the main documentation file with LaTeX
+
+```
+xelatex -shell-escape -8bit lepton.tex
+bibtex lepton.aux
+xelatex -shell-escape -8bit lepton.tex
+xelatex -shell-escape -8bit lepton.tex # LaTeX needs to execute twice to resolve references
+```
+
+# Contributing
+If you wish to report bugs, please use the issue tracker at Github. If you would like to contribute to Lepton, just open an issue or a merge request.
