@@ -44,7 +44,7 @@ The package contains an extracted copy of the source code that can be compiled w
 The `lepton.bin` executable can be compiled with the included `make.sh` script. 
 
 Requirements
-- [OCaml](https://ocaml.org) > 4.0
+- [OCaml](https://ocaml.org/docs/install.html) > 4.0
 
 # Bootstrapping
 The contents of the installation package can be re-generated from the file `lepton.nw`. This will produce a new executable, extract copies of the source files, and compile the LaTeX documentation.
