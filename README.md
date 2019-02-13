@@ -50,8 +50,8 @@ Requirements
 The contents of the installation package can be re-generated from the file `lepton.nw`. This will produce a new executable, extract copies of the source files, and compile the LaTeX documentation.
 
 Requirements
-- [LaTeX](https://www.latex-project.org/)
-- [Pygments](http://pygments.org) for syntax highlighting and the `minted` [LaTeX package](https://ctan.org/pkg/minted?lang=en)
+- [LaTeX](https://www.latex-project.org/get/)
+- [Pygments](http://pygments.org/download/) for syntax highlighting and the `minted` [LaTeX package](https://ctan.org/pkg/minted?lang=en)
 
 Steps :
 - process the main source file with Lepton `lepton lepton.nw -o lepton.tex`
