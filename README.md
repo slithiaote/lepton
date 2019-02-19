@@ -54,7 +54,8 @@ Requirements
 - [Pygments](http://pygments.org/download/) for syntax highlighting and the `minted` [LaTeX package](https://ctan.org/pkg/minted?lang=en)
 
 Steps :
-- process the main source file with Lepton `lepton lepton.nw -o lepton.tex`
+- rename the executable, e.g. `mv lepton.bin lepton`.  (the next command will run `make.sh` and attempt to overwrite `lepton.bin`)
+- process the main source file with Lepton `./lepton lepton.nw -o lepton.tex`
 - compile the main documentation file with LaTeX
 
 ```
