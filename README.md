@@ -44,14 +44,14 @@ The package contains an extracted copy of the source code that can be compiled w
 The `lepton.bin` executable can be compiled with the included `make.sh` script. 
 
 Requirements
-- [OCaml](https://ocaml.org) > 4.0
+- [OCaml](https://ocaml.org/docs/install.html) > 4.0
 
 # Bootstrapping
 The contents of the installation package can be re-generated from the file `lepton.nw`. This will produce a new executable, extract copies of the source files, and compile the LaTeX documentation.
 
 Requirements
-- [LaTeX](https://www.latex-project.org/)
-- [Pygments](http://pygments.org) for syntax highlighting and the `minted` [LaTeX package](https://ctan.org/pkg/minted?lang=en)
+- [LaTeX](https://www.latex-project.org/get/)
+- [Pygments](http://pygments.org/download/) for syntax highlighting and the `minted` [LaTeX package](https://ctan.org/pkg/minted?lang=en)
 
 Steps :
 - process the main source file with Lepton `lepton lepton.nw -o lepton.tex`
