@@ -1,0 +1,213 @@
+\documentclass[a4paper,10pt]{scrartcl}
+% \usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage[bindingoffset=0cm,width=19cm,height=28cm]{geometry}
+\usepackage[moderate]{savetrees}
+\usepackage[numbers]{natbib}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{fancybox}
+\input{lepton.sty}
+
+\begin{document}
+
+\title{Comparison of a few implementations of the Fibonacci sequence}
+\author{Li-Thiao-Té Sébastien}
+\maketitle
+
+\section{Introduction}
+
+In this document, we use Lepton to compare a few implementations of the computation of the Fibonacci sequence (OCaml, Python and C). This is intended to demonstrate Lepton's features, such as
+
+\begin{itemize}
+\item embedding source code inside a document (literate programming)
+\item code restructuring for better documentation
+\item embedding executable instructions
+\end{itemize}
+
+From the point of view of (scientific) applications, these features make it possible to 
+\begin{itemize}
+\item include and distribute the actual source code
+\item distribute the instructions necessary for compiling and running the code
+\item certify that the embedded source code is correct by executing it
+\item running analysis scripts and generating figures
+\item embedding different programming languages in the same document / same platform
+\item simplifying code re-use by distributing only a single file.
+\end{itemize}
+
+Note that code chunks are colorized according to the rules of the \verb Pygments  Python beautifier.
+
+\section{Problem statement}
+
+The Fibonacci sequence is defined as the sequence of integers $F_n$ such that 
+\begin{align}
+  F_0 = 1 \\
+  F_1 = 1 \\
+  F_n = F_{n-1} + F_{n-2}
+\end{align}
+
+The goal is to define function that returns $F_n$ given the integer $n$.
+
+
+\section{Implementation}
+
+The proposed implementations in this document are taken from the Rosetta Code project \url{https://rosettacode.org/wiki/Fibonacci_sequence}. Note that only the OCaml implementation is actually correct.
+
+\subsection{Recursive implementation in OCaml}
+
+We define a \verb fibonacci  function in OCaml in the following code chunk. The contents of this chunk are sent by Lepton to an instance of the OCaml interpreter, and the output (the type of the \verb fibonacci  Ocaml object) is captured below automatically.
+<<ocaml -exec ocaml -chunk ocaml>>=
+let rec fibonacci = function
+  | 0 -> 1
+  | 1 -> 1
+  | n -> fibonacci (n-1) + fibonacci (n-2)
+;;
+@ 
+
+To check that the function is correct, let us ask OCaml for the first few numbers in the sequence.
+<<ocaml>>=
+fibonacci 0;;
+fibonacci 1;;
+fibonacci 2;;
+fibonacci 3;;
+@ 
+
+\subsection{Iterative implementation in Python}
+
+We define a \verb fibIter  function in Python in the following code chunk. The contents of this chunk are sent by Lepton to an instance of the Python interpreter. There is no output on success.
+<<python -exec python -chunk python>>=
+def fibIter(n):
+    if n < 2:
+        return n
+    fibPrev = 1
+    fib = 1
+    for num in xrange(2, n): fibPrev, fib = fib, fib + fibPrev
+    return fib
+
+@ 
+
+To check that the function is correct, let us ask Python for the first few numbers in the sequence.
+<<python>>=
+for i in range(0,4): print fibIter(i),
+
+@ 
+
+\subsection{Iterative implementation in C}
+
+In a compiled language such as C, we need to define the function \verb fibC  first, then include it in a program to use it. Let us start with the function definition.
+<<fibC -chunk c>>=
+long long int fibC(int n) {
+	int fnow = 0, fnext = 1, tempf;
+	while(--n>0){
+		tempf = fnow + fnext;
+		fnow = fnext;
+		fnext = tempf;
+		}
+		return fnext;	
+}
+@ 
+
+We include this in a program with a \verb main  function. This code chunk contains a reference to the definition of the \verb fibC  function, and Lepton will replace the reference with the corresponding source code.
+<<main.c -write -chunk c>>=
+#include <stdlib.h>
+#include <stdio.h>
+
+<<fibC>>
+
+int main(int argc, char **argv)
+{
+	int i, n;
+	if (argc < 2) return 1;
+ 
+	for (i = 1; i < argc; i++) {
+		n = atoi(argv[i]);
+		if (n < 0) {
+			printf("bad input: %s\n", argv[i]);
+			continue;
+		}
+ 
+		printf("%i\n", fibC(n));
+	}
+	return 0;
+}
+@ 
+
+We configured the \verb main.c  code chunk such that its (expanded) contents are written to disk. We can now compile it with the following shell commands.
+<<shell -exec shell>>=
+gcc main.c -o a.out
+./a.out 0 1 2 3
+@ 
+
+
+
+
+
+\section{Comparison of running times}
+
+In this section, we compare the running times of the three proposed implementations. Let us first indicate the system configuration that performed this comparison using shell commands. Note that Python writes to \verb stderr , and we have to redirect its output so that it appears in the PDF document.
+<<shell>>=
+uname -a
+ocaml --version
+python --version 2>&1
+gcc --version
+@ 
+
+The time necessary for computing the number $F_n$ depends on the algorithm, language, as well as $n$. We will compute the running times for several values of $n$, then assemble the results into a plot.
+
+\subsection{Ocaml}
+
+Let us define a function \verb time  to measure the time necessary in OCaml. This function uses the \verb Sys  module in the standard library.
+<<ocaml>>=
+let time niter n = 
+  let start = Sys.time() in
+  for i = 1 to niter do ignore (fibonacci n) done;
+  (Sys.time() -. start) /. float_of_int niter
+;;
+time 100 10;;  
+time 100 15;;  
+time 100 20;;  
+@ 
+
+Writing the results to disk.
+
+\subsection{Results and discussion}
+
+We use Gnuplot for making the figures.
+<<runningtimes.dat -write>>=
+# this is a test file and does not contain actual results
+0.0017 
+0.019 
+0.2
+@ 
+
+<<plot.in -write>>=
+set terminal pdf
+set output "runningtimes.pdf"
+plot "runningtimes.dat" using 1 with linespoints
+@ 
+
+<<shell>>=
+gnuplot plot.in
+@ 
+
+\includegraphics{runningtimes.pdf}
+
+The proposed recursive implementation uses an algorithm with exponential complexity. 
+
+
+\section{Conclusion}
+
+This document shows how to compute the Fibonacci sequence in three different programming languages, with one recursive implementation and two iterative implementations. Using Lepton makes it possible to 
+\begin{itemize}
+\item provide everything in a single executable file that makes it easy to reproduce the results
+\item embed source code and executable instructions in a readable manner
+\item restructure the source code for easier human comprehension
+\item run compilation commands and analysis scripts to ensure that the figures were generated with the provided source code.
+\end{itemize}
+
+\end{document}
