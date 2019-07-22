@@ -3,7 +3,7 @@
 \usepackage{lmodern}
 \usepackage[english]{babel}
 \usepackage{graphicx}
-\usepackage[bindingoffset=0cm,width=19cm,height=28cm]{geometry}
+\usepackage[bindingoffset=0cm,width=17cm,height=26cm]{geometry}
 \usepackage[moderate]{savetrees}
 \usepackage[numbers]{natbib}
 
@@ -16,7 +16,7 @@
 
 \begin{document}
 
-\title{Comparison of a few implementations of the Fibonacci sequence}
+\title{Comparison of a few implementations\\ of the Fibonacci sequence}
 \author{Li-Thiao-Té Sébastien}
 \maketitle
 
@@ -36,34 +36,54 @@ From the point of view of (scientific) applications, these features make it poss
 \item distribute the instructions necessary for compiling and running the code
 \item certify that the embedded source code is correct by executing it
 \item running analysis scripts and generating figures
+\item certify that the figures correspond to the provided source code
 \item embedding different programming languages in the same document / same platform
 \item simplifying code re-use by distributing only a single file.
 \end{itemize}
 
-Note that code chunks are colorized according to the rules of the \verb Pygments  Python beautifier.
+\subsection{Executing this document}
+
+This document is a script and is intended to be executed to produce a PDF file, as well as by-products such as extracted source code or data files. It requires : 
+\begin{itemize}
+\item Lepton to produce a \verb .tex  \LaTeX document,
+\item LaTeX to process the \verb .tex  file into PDF,
+\item the Pygments library for syntax highlighting and the \verb minted  \LaTeX package for code beautification.
+\end{itemize}
+
+To process the document with Lepton, the user should run the command : 
+<<compilation>>=
+lepton fibonacci.nw -o fibonacci.tex
+@ 
+
+To produce the PDF document, the user should run the following commands. \LaTeX\ needs to run twice to process references. 
+<<compilation>>=
+# The LaTeX style file lepton.sty should be in a directory accessible to LaTeX
+pdflatex fibonacci.tex
+pdflatex fibonacci.tex
+@ 
 
 \section{Problem statement}
 
 The Fibonacci sequence is defined as the sequence of integers $F_n$ such that 
 \begin{align}
-  F_0 = 1 \\
+  F_0 = 0 \\
   F_1 = 1 \\
   F_n = F_{n-1} + F_{n-2}
 \end{align}
 
-The goal is to define function that returns $F_n$ given the integer $n$.
+The goal is to define a function that returns $F_n$ given the integer $n$.
 
 
-\section{Implementation}
+\section{Implementations}
 
-The proposed implementations in this document are taken from the Rosetta Code project \url{https://rosettacode.org/wiki/Fibonacci_sequence}. Note that only the OCaml implementation is actually correct.
+The proposed implementations in this document are taken from the Rosetta Code project \url{https://rosettacode.org/wiki/Fibonacci_sequence}.
 
 \subsection{Recursive implementation in OCaml}
 
 We define a \verb fibonacci  function in OCaml in the following code chunk. The contents of this chunk are sent by Lepton to an instance of the OCaml interpreter, and the output (the type of the \verb fibonacci  Ocaml object) is captured below automatically.
 <<ocaml -exec ocaml -chunk ocaml>>=
 let rec fibonacci = function
-  | 0 -> 1
+  | 0 -> 0
   | 1 -> 1
   | n -> fibonacci (n-1) + fibonacci (n-2)
 ;;
@@ -137,7 +157,7 @@ int main(int argc, char **argv)
 }
 @ 
 
-We configured the \verb main.c  code chunk such that its (expanded) contents are written to disk. We can now compile it with the following shell commands.
+We configured the \verb main.c  code chunk such that its (expanded) contents are written to disk. We can now compile it with the following shell commands. Note that this implemenation returns an incorrect value for $F_0$.
 <<shell -exec shell>>=
 gcc main.c -o a.out
 ./a.out 0 1 2 3
@@ -149,9 +169,9 @@ gcc main.c -o a.out
 
 \section{Comparison of running times}
 
-In this section, we compare the running times of the three proposed implementations. Let us first indicate the system configuration that performed this comparison using shell commands. Note that Python writes to \verb stderr , and we have to redirect its output so that it appears in the PDF document.
+In this section, we compare the running times of the three proposed implementations. Let us first indicate the system configuration that is used to perform this comparison using shell commands. Note that Python writes to \verb stderr , and we have to redirect its output so that it appears in the PDF document.
 <<shell>>=
-uname -a
+uname -orvm
 ocaml --version
 python --version 2>&1
 gcc --version
@@ -168,36 +188,114 @@ let time niter n =
   for i = 1 to niter do ignore (fibonacci n) done;
   (Sys.time() -. start) /. float_of_int niter
 ;;
-time 100 10;;  
-time 100 15;;  
-time 100 20;;  
 @ 
 
 Writing the results to disk.
+<<ocaml>>=
+let oc = open_out "runtimes.ocaml" in 
+begin
+  output_string oc "# Running times of Fibonacci sequence using Ocaml, time in seconds\n";
+  for i = 1 to 9 do 
+    output_string oc (string_of_int i ^ "\t" ^ string_of_float (time 1000 i) ^ "\n")
+  done;
+  close_out oc;
+end;;
+@ 
+
+We display below the contents of the results file.
+<<shell>>=
+cat runtimes.ocaml
+@ 
+
+N.B. In the above example, all code chunks with the name \verb ocaml  share the same interpreter process. Consequently, the \verb fibonacci  function defined in the first chunk is available in the subsequent chunks. This is the same for the \verb shell  chunks and for the \verb python  chunks.
+
+
+\subsection{Python}
+
+Similarly, we define a function \verb timefib  to measure the time necessary in Python. There is no output on success.
+<<python>>=
+from time import clock
+
+def timefib(i):
+  start = clock()
+  for n in range(0,1000): fibIter(i)
+  end = clock()
+  return (end-start)/1000
+
+file1 = open("runtimes.python","w")
+file1.write("# Running times of Fibonacci sequence using Python, time in seconds\n")
+for i in range(1,10): 
+  file1.write(str(i))
+  file1.write("\t")
+  file1.write(str(timefib(i)))
+  file1.write("\n")
+
+file1.close()
+@ 
+
+We display below the contents of the results file.
+<<shell>>=
+cat runtimes.python
+@ 
+
+
+\subsection{C}
+
+In C, we write a new program to run the benchmark. Note that this benchmark uses a reference to the \verb fibC  function defined earlier. This ensures that the same code is used in the \verb main.c  and \verb benchmark.c  programs. Lepton automatically inserts a PDF link to the definition of the \verb fibC  function.
+
+<<benchmark.c -write>>=
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
+<<fibC>>
+
+int main(int argc, char **argv)
+{
+    int i,n;
+    clock_t t; 
+    
+    for (n = 1; n<10; n++) {
+        t = clock(); 
+        for (i=1; i<10000; i++) fibC(n); 
+        t = clock() - t; 
+        double time_taken = ((double)t)/CLOCKS_PER_SEC / 10000; // in seconds 
+        printf("%i\t%e\n",n,time_taken);
+    }
+ }
+@ 
+
+We compile and run the benchmark below.
+<<shell>>=
+gcc benchmark.c -o bench.out
+echo "# Running times of Fibonacci sequence using C, time in seconds" > runtimes.c
+./bench.out >> runtimes.c
+head runtimes.c
+@ 
 
 \subsection{Results and discussion}
 
-We use Gnuplot for making the figures.
-<<runningtimes.dat -write>>=
-# this is a test file and does not contain actual results
-0.0017 
-0.019 
-0.2
-@ 
-
+We use Gnuplot for making the figures. We first define the gnuplot script.
 <<plot.in -write>>=
 set terminal pdf
 set output "runningtimes.pdf"
-plot "runningtimes.dat" using 1 with linespoints
+plot "runtimes.ocaml" using 1:2 with linespoints, \
+     "runtimes.python" using 1:2 with linespoints, \
+     "runtimes.c" using 1:2 with linespoints
 @ 
 
+We execute the script in gnuplot. This writes a PDF to disk, which is then included in a \LaTeX\ figure.
 <<shell>>=
-gnuplot plot.in
+gnuplot plot.in # no output on success
 @ 
 
+\begin{figure}
 \includegraphics{runningtimes.pdf}
+\caption{Running time in seconds for computing $F_n$ as a function of $n$ for the three proposed implementations.}
+\label{fig1}
+\end{figure}
 
-The proposed recursive implementation uses an algorithm with exponential complexity. 
+In Figure \ref{fig1}, we plot the running times necessary to compute the Fibonacci sequence. As expected, the OCaml recursive implementation has exponential complexity in time, whereas the Python and C iterative implementations have linear time complexity. The C implementation is much faster than the Python and OCaml code, which are run inside an interactive loop whereas the C code is compiled. It would be interesting to compare with the programs produced with native code compilers of Python and OCaml or just-in-time compilation. Additionally, the recursive OCaml function runs faster than the iterative Python function for small values of $n$, which suggests that there is less overhead for calling functions in OCaml than in Python.
 
 
 \section{Conclusion}

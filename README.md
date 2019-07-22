@@ -49,7 +49,7 @@ Requirements
 # Examples
 Three examples are provided :
 - `hello.nw` is a minimal working example showing how to embed OCaml source code and execute it. It requires only LaTeX and OCaml. See Section 1 of `lepton_manual.pdf` for details.
-- `fibonacci.nw` is an example of a scientific report comparing several implementations of the Fibonacci sequence and their running times. The corresponding rendered PDF `fibonacci.pdf` contains instructions on how to execute it. It is currently a "work-in-progress".
+- `fibonacci.nw` is an example of a scientific report comparing several implementations of the Fibonacci sequence and their running times. The corresponding rendered PDF `fibonacci.pdf` contains instructions on how to execute it. It has the same requirements as "Boostrapping".
 - `lepton.nw` is the source file used for the source code and the documentation of Lepton. Executing this example will regenerate both the binary executable and the PDF documentation. The process is described in the "Bootstrapping" section of this document and in `lepton.pdf`.
 
 # Bootstrapping
@@ -62,7 +62,7 @@ Requirements
 Steps :
 - rename the executable, e.g. `mv lepton.bin lepton`.  (the next command will run `make.sh` and attempt to overwrite `lepton.bin`)
 - process the main source file with Lepton `./lepton lepton.nw -o lepton.tex`
-- compile the main documentation file with LaTeX
+- (optional) compile the re-generated documentation with LaTeX
 
 ```
 xelatex -shell-escape -8bit lepton.tex
