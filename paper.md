@@ -18,8 +18,8 @@ bibliography: biblio_lepton.bib
 # Summary
 
 Source code is very hard to maintain when the documentation is missing. Recognizing
-this fact, D. Knuth [@Knuth84literateprogramming] proposed the literate programming
-paradigm, i.e. that source code and documentation should be written at the
+this fact, @Knuth84literateprogramming proposed the literate programming
+paradigm, i.e., that source code and documentation should be written at the
 same time, inside the same file, and in a format designed for human understanding.
 
 ''Lepton'' is a tool for writing reproducible research papers and similar documents
@@ -35,17 +35,16 @@ Among the current approaches proposed for reproducible research, ''Lepton'' focu
 - offline execution so that results are operator independent,
 - long-term maintainability of ''Lepton'' itself and the documents produced with it
 through a plain text format and a well documented reference implementation
-- adaptability : users are not tied to a single data analysis environment such as R, C or
-python but can use them concurrently, and users can document freely regardless of
+- adaptability: users are not tied to a single data analysis environment such as R, C or
+Python but can use them concurrently, and users can document freely regardless of
 the constraints of the programming language.
 
 ''Lepton'' consists in a standalone executable that processes plain text files
 written in a documentation format such as HTML or LaTeX with optional blocks that
 can contain files to be written to disk, source code or executable instructions.
-It is distributed as a ''Lepton'' file containing the full source code, manual and a tutorial [@zenodo].
+It is distributed as a ''Lepton'' file containing the full source code, manual, and a tutorial [@zenodo].
 The package contains an extracted copy of the source code that can be compiled without ''Lepton''.
 The public repository is hosted on [Github](https://github.com/slithiaote/lepton).
-Previous publications written using and about ''Lepton'' include [@LiThiaoTe20121723]
-and [@LiThiaoTe2012439].
+''Lepton'' has been used in research publications related to teaching computational science and reproducible research [@LiThiaoTe20121723; @LiThiaoTe2012439].
 
 # References
