@@ -44,7 +44,7 @@ let send_to_latex_minted = fun name o reflist chunk output ->
     fprintf !lepton_oc "\\b\101gin{leptonfloat}\n\\caption{%s%s}\\label{%s}\n%!"
       (tex name) (if o.part_number = 1 then "" else sprintf " (part %i)" o.part_number)
       (if o.part_number = 1 then name else name ^ string_of_int o.part_number);
-    fprintf !lepton_oc "\\vspace*{\\leptonlb}\\footnotesize{\\texttt{%s}}\\vspace*{-\\leptonlc}\n%!" 
+    fprintf !lepton_oc "\\vspace*{-\\leptonlb}\\footnotesize{\\texttt{%s}}\\vspace*{-\\leptonlc}\n%!" 
       (String.concat "\\, " (List.map (fun d -> Printf.sprintf "\\index{%s}\\hyperref[%s]{%s}" (tex d) d (tex d)) reflist));
   and leptonfloat_end () = fprintf !lepton_oc "\\\101nd{leptonfloat}\n%!"; in
   match o.chunk_format with
@@ -70,7 +70,7 @@ let send_to_tex name o reflist chunk output = (* echo to documentation, in plain
     Printf.fprintf !lepton_oc "\\b\101gin{leptonfloat}\n\\caption{%s%s}\n\\label{%s}"
       (tex name) (if o.part_number = 1 then "" else Printf.sprintf " (part %i)" o.part_number)
       (if o.part_number = 1 then name else name ^ string_of_int o.part_number);
-    Printf.fprintf !lepton_oc "\\vspace*{\\leptonlb}\\footnotesize{\\texttt{%s}}\\vspace*{-\\leptonlc}\n" 
+    Printf.fprintf !lepton_oc "\\vspace*{-\\leptonlb}\\footnotesize{\\texttt{%s}}\\vspace*{-\\leptonlc}\n" 
       (substitute_split chunk rexp_ref (fun _ -> "") (fun d0 -> let d = Str.matched_group 2 d0 in Printf.sprintf "\\index{%s}\\hyperref[%s]{%s}\\, " (tex d) d (tex d))); 
   and leptonfloat_end () = Printf.fprintf !lepton_oc "\\\101nd{leptonfloat}\n%!"; in
   match o.chunk_format with

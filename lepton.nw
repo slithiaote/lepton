@@ -4,7 +4,7 @@
 \usepackage[english]{babel}
 \usepackage{graphicx}
 \usepackage[bindingoffset=0cm,width=19cm,height=28cm]{geometry}
-\usepackage[moderate]{savetrees}
+\usepackage[sections=normal,bibliography=normal]{savetrees}
 \usepackage[numbers]{natbib}
 
 \usepackage{amsmath}
@@ -16,14 +16,22 @@
 <<lepton.sty -chunk hide -write>>=
 % This file was generated from lepton.nw by lepton.bin
 \usepackage{minted}
-\usepackage{float}
-\usepackage{hyperref}
+<<lepton.sty.float>>
 \usepackage{makeidx}
 \makeindex
-
-\newlength{\leptonla} \newlength{\leptonlb} \newlength{\leptonlc} \newlength{\leptonld} \newlength{\leptonle} \newlength{\leptonlf} 
-\setlength{\leptonla}{1ex} \setlength{\leptonlb}{1ex} \setlength{\leptonlc}{1ex} \setlength{\leptonld}{1ex} \setlength{\leptonle}{1ex} \setlength{\leptonlf}{1ex}
+\makeatletter
+\newcommand\lelistoflistingscaption{\lepton\ : List of listings}
+\providecommand\lelistoflistings{\listof{leptonfloat}{\lelistoflistingscaption}}
+\makeatother
+@ 
+<<lepton.sty.float -chunk hide>>=
 \newcommand{\lepton}{Lepton}
+\usepackage{float}
+\usepackage{hyperref}
+\newlength{\leptonla} \newlength{\leptonlb} \newlength{\leptonlc} 
+\newlength{\leptonld} \newlength{\leptonle} \newlength{\leptonlf} 
+\setlength{\leptonla}{1ex} \setlength{\leptonlb}{1ex} \setlength{\leptonlc}{1ex} 
+\setlength{\leptonld}{1ex} \setlength{\leptonle}{1ex} \setlength{\leptonlf}{1ex}
 \makeatletter
 \renewcommand\floatc@ruled[2]{{\bfseries #1:} \texttt{\flqq\relax#2\frqq}\par}
 \renewcommand\fs@plaintop{\fs@plain
@@ -33,12 +41,9 @@
   \def\@fs@post{\relax\vspace*{-\leptonlb}}%
   \let\@fs@iftopcapt\iftrue}
 \floatname{leptonfloat}{Code chunk}
-\newcommand\lelistoflistingscaption{\lepton\ : List of listings}
-\providecommand\lelistoflistings{\listof{leptonfloat}{\lelistoflistingscaption}}
 \makeatother
 \floatstyle{plaintop}
 \newfloat{leptonfloat}{H}{lol}
-\newminted[leptonchunk]{ocaml}{frame=single,fontsize=\footnotesize}
 @ 
 \input{lepton.sty}
 
@@ -66,13 +71,21 @@
 }
 
 @@ARTICLE{Knuth84literateprogramming,
-  author = {Donald E. Knuth},
-  title = {Literate programming},
-  journal = {THE COMPUTER JOURNAL},
-  year = {1984},
-  volume = {27},
-  pages = {97--111}
+    author = {Knuth, D. E.},
+    title = "{Literate Programming}",
+    journal = {The Computer Journal},
+    volume = {27},
+    number = {2},
+    pages = {97-111},
+    year = {1984},
+    month = {01},
+    abstract = "{The author and his associates have been experimenting for the past several years with a programming language and documentation system called WEB. This paper presents WEB by example, and discusses why the new system appears to be an improvement over previous ones.}",
+    issn = {0010-4620},
+    doi = {10.1093/comjnl/27.2.97},
+    url = {https://doi.org/10.1093/comjnl/27.2.97},
+    eprint = {http://oup.prod.sis.lan/comjnl/article-pdf/27/2/97/981657/270097.pdf},
 }
+
 
 @@MANUAL{ocamlrefman,
   title = {The OCaml system (release 3.12): Documentation and user's manual},
@@ -118,15 +131,24 @@
 }
 
 @@ARTICLE{ramsey1994literate,
-  author = {Ramsey, N.},
-  title = {Literate programming simplified},
-  journal = {Software, IEEE},
-  year = {1994},
-  volume = {11},
-  pages = {97--105},
-  number = {5},
-  publisher = {IEEE}
-}
+ author = {Ramsey, Norman},
+ title = {Literate Programming Simplified},
+ journal = {IEEE Softw.},
+ issue_date = {September 1994},
+ volume = {11},
+ number = {5},
+ month = sep,
+ year = {1994},
+ issn = {0740-7459},
+ pages = {97--105},
+ numpages = {9},
+ url = {https://doi.org/10.1109/52.311070},
+ doi = {10.1109/52.311070},
+ acmid = {625384},
+ publisher = {IEEE Computer Society Press},
+ address = {Los Alamitos, CA, USA},
+ keywords = {code extraction, documentation, feature complexity, language-dependence, literate programming, literate programming tools, programming, programming environments, software tools, source file, system documentation, tool acceptance},
+} 
 
 @@misc{zenodo,
   author       = {Li-Thiao-T\'{e}, S\'{e}bastien},
@@ -139,7 +161,7 @@
 @ 
 
 
-\begin{document} %
+\begin{document}
 
 <<lepton_options -chunk ocaml>>=
 lepton.first lepton.nw -o lepton.tex; xelatex --shell-escape -8bit lepton.tex
@@ -592,7 +614,7 @@ let send_to_latex_minted = fun name o reflist chunk output ->
     fprintf !lepton_oc "\\b\101gin{leptonfloat}\n\\caption{%s%s}\\label{%s}\n%!"
       (tex name) (if o.part_number = 1 then "" else sprintf " (part %i)" o.part_number)
       (if o.part_number = 1 then name else name ^ string_of_int o.part_number);
-    fprintf !lepton_oc "\\vspace*{\\leptonlb}\\footnotesize{\\texttt{%s}}\\vspace*{-\\leptonlc}\n%!" 
+    fprintf !lepton_oc "\\vspace*{-\\leptonlb}\\footnotesize{\\texttt{%s}}\\vspace*{-\\leptonlc}\n%!" 
       (String.concat "\\, " (List.map (fun d -> Printf.sprintf "\\index{%s}\\hyperref[%s]{%s}" (tex d) d (tex d)) reflist));
   and leptonfloat_end () = fprintf !lepton_oc "\\\101nd{leptonfloat}\n%!"; in
   match o.chunk_format with
@@ -628,7 +650,7 @@ let send_to_tex name o reflist chunk output = (* echo to documentation, in plain
     Printf.fprintf !lepton_oc "\\b\101gin{leptonfloat}\n\\caption{%s%s}\n\\label{%s}"
       (tex name) (if o.part_number = 1 then "" else Printf.sprintf " (part %i)" o.part_number)
       (if o.part_number = 1 then name else name ^ string_of_int o.part_number);
-    Printf.fprintf !lepton_oc "\\vspace*{\\leptonlb}\\footnotesize{\\texttt{%s}}\\vspace*{-\\leptonlc}\n" 
+    Printf.fprintf !lepton_oc "\\vspace*{-\\leptonlb}\\footnotesize{\\texttt{%s}}\\vspace*{-\\leptonlc}\n" 
       (substitute_split chunk rexp_ref (fun _ -> "") (fun d0 -> let d = Str.matched_group 2 d0 in Printf.sprintf "\\index{%s}\\hyperref[%s]{%s}\\, " (tex d) d (tex d))); 
   and leptonfloat_end () = Printf.fprintf !lepton_oc "\\\101nd{leptonfloat}\n%!"; in
   match o.chunk_format with
@@ -728,56 +750,30 @@ To that end, the manual is in fact composed of a series of chunks that describe 
 \end{itemize}
 
 Let us first define the \LaTeX\ header.
-<<lepton_manual.nw -chunk tex -write>>=
+<<lepton_manual.nw -chunk tex -write -expand>>=
 \documentclass[a4paper,10pt]{scrartcl} 
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[english]{babel}
 \usepackage{graphicx}
 \usepackage[bindingoffset=0cm,width=19cm,height=28cm]{geometry}
-\usepackage[bibliography=normal]{savetrees}
+\usepackage[sections=normal,bibliography=normal]{savetrees}
 \usepackage[numbers]{natbib}
-\setlength{\bibsep}{0pt plus 0.3ex}
+<<lepton.sty.float>>
 
-\usepackage{float}
-\usepackage{hyperref}
-
-\newlength{\leptonla} \newlength{\leptonlb} \newlength{\leptonlc} 
-\newlength{\leptonld} \newlength{\leptonle} \newlength{\leptonlf} 
-\setlength{\leptonla}{2ex} \setlength{\leptonlb}{1ex} \setlength{\leptonlc}{1ex} 
-\setlength{\leptonld}{1ex} \setlength{\leptonle}{1ex} \setlength{\leptonlf}{2ex}
-\newcommand{\lepton}{Lepton}
-\makeatletter
-\renewcommand\floatc@ruled[2]{{\bfseries #1:} \texttt{\flqq\relax#2\frqq}\par}
-\renewcommand\fs@plaintop{\fs@plain
-  \let\@fs@capt\floatc@ruled
-  \def\@fs@pre{\relax\vspace*{-\leptonla}}%
-  \def\@fs@mid{\relax}%
-  \def\@fs@post{\relax\vspace*{-\leptonlf}}%
-  \let\@fs@iftopcapt\iftrue}
-\floatname{leptonfloat}{Code chunk}
-\makeatother
-\floatstyle{plaintop}
-\newfloat{leptonfloat}{H}{lol}
 \begin{document}
-
-\section{The \lepton\ manual}
-\label{sec:manual}
-
+\section{The \lepton\ manual} \label{sec:manual}
 @ 
 
 We provide a tutorial as the first section of the manual.
-<<lepton_manual.nw>>=
-\subsection{Tutorial}
-\label{sec:tutorial}
-
+<<lepton_manual.nw -noexpand>>=
+\subsection{Tutorial} \label{sec:tutorial}
 \begin{minipage}{0.7\linewidth}
 To write a ``hello world'' manuscript, we use the \verb hello.nw  file as an example of the \LaTeX-like syntax:
 <<hello.nw -write -chunk tex>>=
 \documentclass[paper=a7]{scrartcl}
 \usepackage[width=7cm,height=10cm]{geometry}
-\usepackage{float}
-\newfloat{leptonfloat}{H}{lol}
+\usepackage{float} \newfloat{leptonfloat}{H}{lol}
 \begin{document}
 The code below sends "hello world" instructions to the \verb ocaml  interpreter.
 <<hello_world -exec ocaml -chunk ocaml>>=
@@ -787,12 +783,9 @@ print_string(msg); print_newline();;
 \end{document}
 @ 
 
-The \lepton\ executable splits the file into documentation 
-and source code, executes instructions where specified, and embeds the results. 
-\lepton\ turns \verb hello.nw  into a legitimate \LaTeX\ document \verb hello.tex . 
-When processing a file, \lepton\ outputs the name of each encountered code snippet 
-and how it deals with it.
-
+The \lepton\ executable splits the file into documentation and source code, executes instructions where specified, 
+and embeds the results. \lepton\ turns \verb hello.nw  into a legitimate \LaTeX\ document \verb hello.tex . 
+When processing a file, \lepton\ outputs the name of each encountered code snippet and how it deals with it.
 <<hello.tex -exec shell>>=
 ./lepton.bin -format_with tex hello.nw -o hello.tex
 @ 
@@ -804,8 +797,7 @@ pdflatex -interaction=batchmode hello.tex
 @   
 \end{minipage}
 \begin{minipage}{0.3\linewidth}
-  \centering
-  \fbox{  \includegraphics[width=\linewidth]{hello.pdf}}
+  \centering \fbox{\includegraphics[width=\linewidth]{hello.pdf}}
 \end{minipage}
 @
 
@@ -828,7 +820,7 @@ This is the \LaTeX\ code produced by the \verb tex  formatter from the \verb hel
 \vspace*{-2mm}
 \begin{verbatim*}
 <<tex_output -exec shell -chunk hide -output verb>>=
-head hello.tex -n 20 | tail -n 14
+head hello.tex -n 19 | tail -n 14
 @ 
 \end{verbatim*}
 

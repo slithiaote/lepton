@@ -1,7 +1,6 @@
 \documentclass[paper=a7]{scrartcl}
 \usepackage[width=7cm,height=10cm]{geometry}
-\usepackage{float}
-\newfloat{leptonfloat}{H}{lol}
+\usepackage{float} \newfloat{leptonfloat}{H}{lol}
 \begin{document}
 The code below sends "hello world" instructions to the \verb ocaml  interpreter.
 <<hello_world -exec ocaml -chunk ocaml>>=
