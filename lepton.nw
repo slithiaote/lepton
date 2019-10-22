@@ -61,7 +61,7 @@
 \newfloat{specification}{H}{spec}
 
 <<biblio_lepton.bib -write -chunk hide>>=
-@@Comment This file was generated from lepton.nw by lepton.bin
+Comment This file was generated from lepton.nw by lepton.bin
 @@MANUAL{Pygments,
   title = {Pygments},
   author = {Georg Brandl and Tim Hatch and Armin Ronacher},
