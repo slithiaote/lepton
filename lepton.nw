@@ -59,6 +59,8 @@
 \makeatother
 \floatstyle{specification}
 \newfloat{specification}{H}{spec}
+\floatstyle{boxed}
+\newfloat{faq}{H}{faq}
 
 <<biblio_lepton.bib -write -chunk hide>>=
 Comment This file was generated from lepton.nw by lepton.bin
@@ -432,6 +434,16 @@ N.B. Characters appearing on the same line after a chunk header, a chunk end, a 
 @ 
 \end{specification}
 
+\begin{faq}
+<<faq -chunk verb>>=
+Most interpreters operate by sending and catching print instructions. If you get an error in an interpreted chunk and do not understand why there is a print some float command, this means that your code block is not closed inside the chunk.
+
+Beware of DOS end-of-line characters in UNIX files. Lepton will send them to the interpreter.
+
+@ 
+\end{faq}
+
+
 The lexical analyzer is responsible for transforming a stream of characters (from the \lepton\ file) into a series of chunks. We first define variables and regular expressions.
 <<lexer.mll -write>>=
 <<boilerplate>>
@@ -487,6 +499,15 @@ and chunkref_list = parse
     | char* "\n"? { chunkref_list lexbuf; } | eof { [] }
 
 @ 
+
+\begin{faq}
+<<faq>>=
+Gobble error is produced when Lepton when chunk nesting is incorrect. This usually happens when forgetting to close a chunk with \verb @ .
+
+A warning is issued when a reference to a code chunk is not found anywhere in the document.
+
+@ 
+\end{faq}
 
 \verb lexer.mll  does not contain legitimate OCaml code. It must be processed by \verb ocamllex  to produce the actual lexer in the file \verb lexer.ml (see Section \ref{sec:compile}). The actual lexer is implemented as a Deterministic Finite Automaton for efficiency. 
 
@@ -826,6 +847,9 @@ head hello.tex -n 19 | tail -n 14
 
 \subsection{Current implementation and availability}
 <<spec_availability>>
+
+\subsection{Frequently Asked Questions}
+<<faq>>
 
 \bibliographystyle{plainnat}
 \bibliography{biblio_lepton}
