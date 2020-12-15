@@ -434,15 +434,6 @@ N.B. Characters appearing on the same line after a chunk header, a chunk end, a 
 @ 
 \end{specification}
 
-\begin{faq}
-<<faq -chunk verb>>=
-Most interpreters operate by sending and catching print instructions. If you get an error in an interpreted chunk and do not understand why there is a print some float command, this means that your code block is not closed inside the chunk.
-
-Beware of DOS end-of-line characters in UNIX files. Lepton will send them to the interpreter.
-
-@ 
-\end{faq}
-
 
 The lexical analyzer is responsible for transforming a stream of characters (from the \lepton\ file) into a series of chunks. We first define variables and regular expressions.
 <<lexer.mll -write>>=
@@ -598,6 +589,18 @@ register_process_creator "scilab" (make_process_creator scilab_open ("disp(\"325
 %   oc_in,oc_out;;
 % register_process_creator "julia" (make_process_creator julia_open ("\nprintln(\"" ^ str ^ "\")\n") str);;
 % @ 
+
+\begin{faq}
+<<faq -chunk verb>>=
+Currently the list of external interpreters is specified at compile time. 
+
+Dialog between Lepton and external interpreters happens by sending and catching print instructions. Reading from the process pipe when there is no output will typically result in \verb|Fatal error: exception End_of_file|. This occurs when the interpreter is not install in the host system, or when the chunk content is malformed (syntax error). Some interpreters wait for a complete input, in which case the Lepton process seems stalled.
+
+Beware of DOS end-of-line characters in UNIX files. Lepton will send them to the interpreter.
+
+@ 
+\end{faq}
+
 
 
 \subsection{Documentation formatters}
@@ -823,7 +826,7 @@ pdflatex -interaction=batchmode hello.tex
 @
 
 \newpage
-We then assemble the specification chunks from Section \ref{sec:implementation}.
+We then assemble the specification chunks \footnote{The link to the code chunk containing FAQ items is missing here because FAQ items are inluded verbatim in this document without a code chunk} from Section \ref{sec:implementation}.
 <<lepton_manual.nw>>=
 \subsection{Usage and command-line options}
 <<spec_commandline>>
