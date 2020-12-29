@@ -37,7 +37,8 @@ knowledge of the CeCILL license and that you accept its terms.
 open Lepton;;
 let str = string_of_float (Random.float 1.);;
 register_process_creator "shell" (make_process_creator (fun _ -> Unix.open_process "sh") ("echo \"" ^ str ^ "\"\n") str) ;;
-register_process_creator "python" (make_process_creator (fun _ -> Unix.open_process "python -i") ("print \"" ^ str ^ "\"\n") str);;		     
+register_process_creator "python2" (make_process_creator (fun _ -> Unix.open_process "python2 -i") ("print \"" ^ str ^ "\"\n") str);;		     
+register_process_creator "python3" (make_process_creator (fun _ -> Unix.open_process "python3 -i") ("print(\"" ^ str ^ "\")\n") str);;		     
 register_process_creator "R" (make_process_creator (fun _ -> Unix.open_process "R --slave") ("cat(\"" ^ str ^ "\\n\")\n") str);;
 let ocaml_creator = 
   let open_proc = fun _ -> 

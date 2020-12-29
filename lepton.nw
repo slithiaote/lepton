@@ -556,9 +556,15 @@ The process creators for the UNIX shell, Python and R interpreters are easily de
 open Lepton;;
 let str = string_of_float (Random.float 1.);;
 register_process_creator "shell" (make_process_creator (fun _ -> Unix.open_process "sh") ("echo \"" ^ str ^ "\"\n") str) ;;
-register_process_creator "python" (make_process_creator (fun _ -> Unix.open_process "python -i") ("print \"" ^ str ^ "\"\n") str);;		     
+register_process_creator "python2" (make_process_creator (fun _ -> Unix.open_process "python2 -i") ("print \"" ^ str ^ "\"\n") str);;		     
+register_process_creator "python3" (make_process_creator (fun _ -> Unix.open_process "python3 -i") ("print(\"" ^ str ^ "\")\n") str);;		     
 register_process_creator "R" (make_process_creator (fun _ -> Unix.open_process "R --slave") ("cat(\"" ^ str ^ "\\n\")\n") str);;
 @ 
+\begin{faq}
+<<faq -chunk verb>>=
+Python 3 migration : the name of the python executable and the usage of the print function are hardcoded in the current implementation. However Python 3 introduced deliberate incompatibilities. Currently users of the Python interpreter in code chunks must explicitly indicate the python version in the chunk header via \verb|-exec python2| or \verb|-exec python3|, and should not use syntax compatibility layers such as python-future.
+@ 
+\end{faq}
 
 The OCaml process creator is more complex. We must set the \verb TERM  environment variable to empty, otherwise the interpreter assumes a full-fledged UNIX terminal and outputs color codes. Additionally, we suppress the first two lines that correspond to the OCaml version.
 <<interpreters.ml>>=
@@ -866,7 +872,6 @@ bibtex lepton_manual.aux
 pdflatex lepton_manual.tex
 pdflatex lepton_manual.tex  # LaTeX needs to execute twice to resolve references
 @ 
-
 
 
 \bibliographystyle{plainnat}
