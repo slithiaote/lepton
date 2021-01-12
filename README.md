@@ -41,7 +41,7 @@ The package contains an extracted copy of the source code that can be compiled w
 - `lepton.pdf` contains the implementation details.
 
 # Installation
-The `lepton.bin` executable can be compiled with the included `make.sh` script. 
+The `lepton.bin` executable can be compiled with the included `make.sh` script in the bootstrap directory.
 
 Requirements
 - [OCaml](https://ocaml.org/docs/install.html) > 4.0
