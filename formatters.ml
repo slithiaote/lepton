@@ -99,10 +99,19 @@ let send_to_creole name o reflist chunk output =
     | "hide" -> ()
     | _ -> Printf.fprintf !lepton_oc "\n{{{\n%s}}}\n%!" output ; end;      
 ;;
+let send_to_github name o reflist chunk output = 
+  begin match o.chunk_format with
+    | "hide" -> ()
+    | _ -> Printf.fprintf !lepton_oc "\n```%s\n%s```\n%!" o.chunk_format chunk ; end;
+  begin match o.output_format with
+    | "hide" -> ()
+    | _ -> Printf.fprintf !lepton_oc "\n```%s\n%s```\n%!" o.output_format output ; end;      
+;;
 Lepton.formatter := send_to_latex_minted;;
 let set = function
   | "latex_minted" -> Lepton.formatter := send_to_latex_minted
   | "tex"          -> Lepton.formatter := send_to_tex
   | "creole"       -> Lepton.formatter := send_to_creole
+  | "github"       -> Lepton.formatter := send_to_github
   | "html"         -> Lepton.formatter := send_to_html
   | _ -> failwith "unknown selected formatter";;

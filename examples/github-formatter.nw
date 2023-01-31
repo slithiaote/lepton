@@ -1,0 +1,12 @@
+* Statement of purpose
+This file provides an example of Github-flavored Markdown output by Lepton. It also serves as a test of the corresponding code.
+
+* Assets and requirements
+No assets. This test shows off Ocaml and Python programs.
+
+* Method
+
+<<shell -exec shell -chunk sh>>=
+# This is a comment
+echo "Hello world."
+@

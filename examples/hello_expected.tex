@@ -1,0 +1,21 @@
+\documentclass[paper=a7]{scrartcl}
+\usepackage[width=7cm,height=10cm]{geometry}
+\usepackage{float} \newfloat{leptonfloat}{H}{lol}
+\begin{document}
+The code below sends "hello world" instructions to the \verb ocaml  interpreter.
+\begin{leptonfloat}
+\caption{hello\_world}
+\label{hello_world}\vspace*{-\leptonlb}\footnotesize{\texttt{}}\vspace*{-\leptonlc}
+\begin{verbatim}
+let msg = "Hello world.";;
+print_string(msg); print_newline();;
+\end{verbatim}
+\vspace*{-\leptonld}Interpret with \texttt{ocaml}\vspace*{-\leptonle}
+\begin{verbatim}
+
+val msg : string = "Hello world."
+Hello world.
+- : unit = ()
+\end{verbatim}
+\end{leptonfloat}
+\end{document}

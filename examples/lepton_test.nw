@@ -1,0 +1,18 @@
+This file contains a test suite for Lepton.
+It is intended to be compared to a reference output
+
+<<test_python2 -exec python2>>=
+print "hello world."
+
+@ 
+
+<<test_python3 -exec python3>>=
+print("hello world.")
+
+@ 
+
+TODO : Lepton chunk header should allow several words
+<<a chunk header composed of several words>>=
+chunk content
+@ 
+

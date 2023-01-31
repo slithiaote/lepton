@@ -1,0 +1,59 @@
+image: frolvlad/alpine-ocaml
+
+stages:
+  - configure
+  - build
+  - bootstrap
+  - test
+
+check-config:
+  stage: configure
+  script:
+    - uname -a
+    - ocaml -version
+    
+build-init:
+  stage: build
+  script:
+    - sh make.sh
+  artifacts:
+    paths:
+      - lepton.bin
+
+build-bootstrap:
+  stage: bootstrap
+  script:
+    # Save previous version for assertion
+    #- cp .gitlab-ci.yml .gitlab-ci.yml.old
+    #- cp Licence_CeCILL_V2.1-en.txt Licence_CeCILL_V2.1-en.txt.old
+
+    - cd bootstrap
+
+    # Run lepton on lepton.nw
+    - ../lepton.bin lepton.nw -o lepton.tex
+    
+    # Assert generated files. (source files for compilation)
+    - diff make.sh          ../make.sh
+    - diff lexer.mll        ../lexer.mll
+    - diff formatters.ml    ../formatters.ml
+    - diff interpreters.ml  ../interpreters.ml
+    - diff lepton.ml        ../lepton.ml
+    - diff main.ml          ../main.ml
+    
+    # Assert generated files. 
+    - diff .gitlab-ci.yml   ../.gitlab-ci.yml
+    - diff Licence_CeCILL_V2.1-en.txt ../Licence_CeCILL_V2.1-en.txt
+    
+     # Assert generated files.
+    - diff lepton.sty ../lepton.sty
+    - diff biblio_lepton.bib ../biblio_lepton.bib
+
+test-examples:
+  stage: test
+  script:
+    - cd examples
+    - ../lepton.bin -format_with tex hello.nw -o hello.tex
+    - diff hello.tex hello_expected.tex
+    - ../lepton.bin -format_with github github-formatter.nw -o github-formatter.md
+    - diff github-formatter.md github-formatter.md.expected20211101
+
