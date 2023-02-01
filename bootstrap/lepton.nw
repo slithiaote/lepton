@@ -775,10 +775,6 @@ This is reflected in the following part of the Gitlab CI script :
 build-bootstrap:
   stage: bootstrap
   script:
-    # Save previous version for assertion
-    #- cp .gitlab-ci.yml .gitlab-ci.yml.old
-    #- cp Licence_CeCILL_V2.1-en.txt Licence_CeCILL_V2.1-en.txt.old
-
     - cd bootstrap
 
     # Run lepton on lepton.nw
@@ -792,11 +788,11 @@ build-bootstrap:
     - diff lepton.ml        ../lepton.ml
     - diff main.ml          ../main.ml
     
-    # Assert generated files. 
+    # Assert generated files. (gitlab CI + licence)
     - diff .gitlab-ci.yml   ../.gitlab-ci.yml
     - diff Licence_CeCILL_V2.1-en.txt ../Licence_CeCILL_V2.1-en.txt
     
-     # Assert generated files.
+     # Assert generated files. (LaTeX files)
     - diff lepton.sty ../lepton.sty
     - diff biblio_lepton.bib ../biblio_lepton.bib
 @
@@ -816,7 +812,7 @@ test-examples:
     - ../lepton.bin -format_with tex hello.nw -o hello.tex
     - diff hello.tex hello_expected.tex
     - ../lepton.bin -format_with github github-formatter.nw -o github-formatter.md
-    - diff github-formatter.md github-formatter.md.expected20211101
+    - diff github-formatter.md github-formatter.md.expected
 @
 
 \subsection{Producing PDFs with \LaTeX}
