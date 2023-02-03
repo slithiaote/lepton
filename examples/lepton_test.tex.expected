@@ -1,0 +1,27 @@
+This file contains a test suite for Lepton.
+The output of running this file with lepton with default options is compared to lepton_test.nw.expected during CI.
+
+\begin{leptonfloat}
+\caption{test\_ocaml}\label{test_ocaml}
+\vspace*{-\leptonlb}\footnotesize{\texttt{}}\vspace*{-\leptonlc}
+\begin{minted}[frame=single,fontsize=\footnotesize]{text}
+print_endline("hello world.");;
+
+\end{minted}
+\vspace*{-\leptonld}Interpret with \texttt{ocaml}\vspace*{-\leptonle}
+\begin{minted}[frame=single,fontsize=\footnotesize]{text}
+
+hello world.
+- : unit = ()
+\end{minted}
+\end{leptonfloat}
+
+TODO : Lepton chunk header should allow several words
+\begin{leptonfloat}
+\caption{a}\label{a}
+\vspace*{-\leptonlb}\footnotesize{\texttt{}}\vspace*{-\leptonlc}
+\begin{minted}[frame=single,fontsize=\footnotesize]{text}
+chunk content
+\end{minted}
+\end{leptonfloat}
+

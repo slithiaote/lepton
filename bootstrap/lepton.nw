@@ -810,7 +810,9 @@ test-examples:
   script:
     - cd examples
     - ../lepton.bin -format_with tex hello.nw -o hello.tex
-    - diff hello.tex hello_expected.tex
+    - diff hello.tex hello.tex.expected
+    - ../lepton.bin lepton_test.nw -o lepton_test.tex
+    - diff lepton_test.tex lepton_test.tex.expected
     - ../lepton.bin -format_with github github-formatter.nw -o github-formatter.md
     - diff github-formatter.md github-formatter.md.expected
 @
