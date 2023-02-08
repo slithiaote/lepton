@@ -41,7 +41,10 @@ The package contains an extracted copy of the source code that can be compiled w
 - `lepton.pdf` contains the implementation details.
 
 # Installation
-The `lepton.bin` executable can be compiled with the included `make.sh` script in the init directory.
+The root directory contains all the necessary files for using Lepton:
+- The `lepton.bin` executable can be compiled with the included `make.sh` script.
+- The `lepton.sty` file is useful for producing files in LaTeX together with code highlighting with the Pygments library.
+  The `lepton.bib` file contains references in BibTeX format.
 
 Requirements
 - [OCaml](https://ocaml.org/docs/install.html) > 4.0
@@ -53,7 +56,9 @@ Three examples are provided :
 - `lepton.nw` is the source file used for the source code and the documentation of Lepton. Executing this example will regenerate both the binary executable and the PDF documentation. The process is described in the "Bootstrapping" section of this document and in `lepton.pdf`.
 
 # Bootstrapping
-The contents of the installation package can be re-generated from the file `lepton.nw`. This will produce a new executable, extract copies of the source files, and compile the LaTeX documentation.
+All the provide files can be re-generated from the file `lepton.nw` in the `bootstrap` directory. 
+This will produce a new executable, extract copies of the source files. 
+Continuous Integration is defined in `.gitlab-ci.yml` and run on [](https://plmlab.math.cnrs.fr/lithiaote/lepton)
 
 Requirements
 - [LaTeX](https://www.latex-project.org/get/)
