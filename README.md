@@ -58,7 +58,7 @@ Three examples are provided :
 # Bootstrapping
 All the provide files can be re-generated from the file `lepton.nw` in the `bootstrap` directory. 
 This will produce a new executable, extract copies of the source files. 
-Continuous Integration is defined in `.gitlab-ci.yml` and run on [](https://plmlab.math.cnrs.fr/lithiaote/lepton)
+Continuous Integration is defined in `.gitlab-ci.yml` and run on [PLMLab](https://plmlab.math.cnrs.fr/lithiaote/lepton)
 
 Requirements
 - [LaTeX](https://www.latex-project.org/get/)
