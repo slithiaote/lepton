@@ -1,4 +1,5 @@
-image: frolvlad/alpine-ocaml
+variables:
+  IMAGE_BASIC: "alpine-ocaml"
 
 stages:
   - configure
@@ -6,14 +7,42 @@ stages:
   - bootstrap
   - test
 
-check-config:
+docker-images:
   stage: configure
+  image: quay.io/buildah/stable
+  variables:
+    # Use vfs with buildah. Docker offers overlayfs as a default, but buildah
+    # cannot stack overlayfs on top of another overlayfs filesystem.
+    STORAGE_DRIVER: vfs
+    # Write all image metadata in the docker format, not the standard OCI format.
+    # Newer versions of docker can handle the OCI format, but older versions, like
+    # the one shipped with Fedora 30, cannot handle the format.
+    BUILDAH_FORMAT: docker
+    # You may need this workaround for some errors: https://stackoverflow.com/a/70438141/1233435
+    BUILDAH_ISOLATION: chroot
+  before_script:
+    # Log in to the GitLab container registry
+    - export REGISTRY_AUTH_FILE=$HOME/auth.json
+    - echo "$CI_REGISTRY_PASSWORD" | buildah login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+  script:
+    - buildah images
+    - buildah build -f $IMAGE_BASIC -t $CI_REGISTRY_IMAGE/$IMAGE_BASIC
+    - buildah images
+    - buildah push $CI_REGISTRY_IMAGE/$IMAGE_BASIC
+  only:
+    changes:
+    - $IMAGE_BASIC
+
+check-config:
+  stage: build
+  image: $CI_REGISTRY_IMAGE/$IMAGE_BASIC
   script:
     - uname -a
     - ocaml -version
     
 build-init:
   stage: build
+  image: $CI_REGISTRY_IMAGE/$IMAGE_BASIC
   script:
     - sh make.sh
   artifacts:
@@ -22,6 +51,7 @@ build-init:
 
 build-bootstrap:
   stage: bootstrap
+  image: $CI_REGISTRY_IMAGE/$IMAGE_BASIC
   script:
     - cd bootstrap
 
@@ -46,6 +76,7 @@ build-bootstrap:
 
 test-examples:
   stage: test
+  image: $CI_REGISTRY_IMAGE/$IMAGE_BASIC
   script:
     - cd examples
     - ../lepton.bin -format_with tex hello.nw -o hello.tex

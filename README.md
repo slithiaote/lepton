@@ -78,3 +78,10 @@ xelatex -shell-escape -8bit lepton.tex # LaTeX needs to execute twice to resolve
 
 # Contributing
 If you wish to report bugs, please use the issue tracker at Github. If you would like to contribute to Lepton, just open an issue or a merge request.
+
+# Docker images
+
+We use the following Docker images in this project
+- ocamlpro/ocaml:4.14 : Alpine Linux with OCaml, just enough for compiling lepton
+- lepton + python : for testing the markdown formatter and python chunks
+- lepton + debian + latex : for producing PDF documentation
