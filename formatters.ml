@@ -102,9 +102,11 @@ let send_to_creole name o reflist chunk output =
 let send_to_github name o reflist chunk output = 
   begin match o.chunk_format with
     | "hide" -> ()
+    | "verb" -> Printf.fprintf !lepton_oc "\n%s\n%!" chunk;
     | _ -> Printf.fprintf !lepton_oc "\n```%s\n%s```\n%!" o.chunk_format chunk ; end;
   begin match o.output_format with
     | "hide" -> ()
+    | "verb" -> Printf.fprintf !lepton_oc "\n%s\n%!" output;
     | _ -> Printf.fprintf !lepton_oc "\n```%s\n%s```\n%!" o.output_format output ; end;      
 ;;
 Lepton.formatter := send_to_latex_minted;;
